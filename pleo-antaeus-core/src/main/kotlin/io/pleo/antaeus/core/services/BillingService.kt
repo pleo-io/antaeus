@@ -55,7 +55,7 @@ class BillingService(
                 }
             }
         }
-            .subscribeOn(Schedulers.newSingle("database-thread"))
+            .subscribeOn(Schedulers.elastic())
 
     private fun charge(invoice: Invoice) =
         Mono
