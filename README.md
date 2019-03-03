@@ -1,55 +1,51 @@
-## Antaeus
+## Process
 
-Antaeus (/ænˈtiːəs/), in Greek mythology, a giant of Libya, the son of the sea god Poseidon and the Earth goddess Gaia. He compelled all strangers who were passing through the country to wrestle with him. Whenever Antaeus touched the Earth (his mother), his strength was renewed, so that even if thrown to the ground, he was invincible. Heracles, in combat with him, discovered the source of his strength and, lifting him up from Earth, crushed him to death.
+### Design
+Before I started implementation, I focused on high level architecture and how to approach batch processing 
+correctly. Some of the challenges I found here:
+* How to achieve scalability so multiple processes/threads can handle invoices without blocking each other and with avoiding double payments?
+* What if external payment service is slow and invoice volume is high? 
+* What if app is down during the time it’s scheduled to start processing and how to retry after it becomes healthy?
 
-Welcome to our challenge.
+At that moment I decided:
+* Application has to charge invoices simultaneously by multiple threads. In the real world `Payment Provider` would probably
+be regular REST service so we could some nonblocking http client to handle multiple requests by a single thread
+* To avoid charging the same invoices at the same time I decided to use database locking (`SELECT..FOR UPDATE`) 
+but to keep database transactions short I introduced new invoice type(`IN PROGRESS`) so the thread that fetches invoices 
+first locks rows, changes invoice statuses to `IN_PROGRESS` and commit a transaction. 
+I tested it using a real database (`postgresql`)
+* To fetch invoices from database in batches as I expect a high volume of pending invoices to process so getting all of them
+in a single query is not an option
 
-## The challenge
+### Billing Service
+I decided to use Project Reactor here because I think it's very good to orchestrate such flows in a declarative style. 
+What's more, it allows to easily wrap synchronous, blocking calls and separate them from rest of the code.
+Later we could replace blocking calls with nonblocking implementation like [reactor netty client](https://github.com/reactor/reactor-netty)
+and [r2dbc](https://github.com/r2dbc).
 
-As most "Software as a Service" (SaaS) companies, Pleo needs to charge a subscription fee every month. Our database contains a few invoices for the different markets in which we operate. Your task is to build the logic that will pay those invoices on the first of the month. While this may seem simple, there is space for some decisions to be taken and you will be expected to justify them.
+Firstly, I created a pending invoices publisher. 
+It works in pull manner which means it publishes next elements only when subscriber request them (`sink.onRequest`). 
+Then I focused on charging a single invoice and handling all corner cases. It runs on [elastic scheduler](https://projectreactor.io/docs/core/release/api/reactor/core/scheduler/Schedulers.html#elastic--)
+that is a good choice for I/O blocking work.
+I added a timeout of 5s (could be configurable) and assumed it's worth retrying 
+similar to network exception using exponential backoff strategy. 
+I assumed our external payment provider request is idempotent so it's safe to call it multiple times with the same invoice. 
+Otherwise, they would have provided `status` method or something similar.
+Finally, I connected both parts in `chargeAll` method. It's worth mentioning `limitRate` operator 
+that controls the number of rows fetched by pending invoices publisher 
+while `flatMap` enables concurrency (number of subscriptions limited to 50 at the same time).
 
-### Structure
-The code given is structured as follows. Feel free however to modify the structure to fit your needs.
-```
-├── pleo-antaeus-app
-|
-|       Packages containing the main() application. 
-|       This is where all the dependencies are instantiated.
-|
-├── pleo-antaeus-core
-|
-|       This is where you will introduce most of your new code.
-|       Pay attention to the PaymentProvider and BillingService class.
-|
-├── pleo-antaeus-data
-|
-|       Module interfacing with the database. Contains the models, mappings and access layer.
-|
-├── pleo-antaeus-models
-|
-|       Definition of models used throughout the application.
-|
-├── pleo-antaeus-rest
-|
-|        Entry point for REST API. This is where the routes are defined.
-└──
-```
+### Scheduling 
+I run invoice processing tasks one by one with 10 minutes delays if it's 1st day of a month. I don't know the exact requirements and 
+I assumed new pending invoices could appear in any moment.
 
-## Instructions
-Fork this repo with your solution. We want to see your progression through commits (don’t commit the entire solution in 1 step) and don't forget to create a README.md to explain your thought process.
+## Alternative approach
 
-Please let us know how long the challenge takes you. We're not looking for how speedy or lengthy you are. It's just really to give us a clearer idea of what you've produced in the time you decided to take. Feel free to go as big or as small as you want.
+* I think that billing service should be separate service. It runs only once per month but consumes resources all the time.
+One idea would be to create AWS Lambda scheduled by CloudWatch Events. 
+* Other option to handle load balancing could be to evaluate some publisher/subscriber pattern. 
+One processes would fetch pending invoices and publish messages. 
+There would a job queue that would allow sharing work between multiple workers.
+* [Quartz Scheduler](http://www.quartz-scheduler.org) with persistent Job Store could be a possible solution as well
 
-Happy hacking 😁!
 
-## How to run
-```
-./docker-start.sh
-```
-
-## Libraries currently in use
-* [Exposed](https://github.com/JetBrains/Exposed) - DSL for type-safe SQL
-* [Javalin](https://javalin.io/) - Simple web framework (for REST)
-* [kotlin-logging](https://github.com/MicroUtils/kotlin-logging) - Simple logging framework for Kotlin
-* [JUnit 5](https://junit.org/junit5/) - Testing framework
-* [Mockk](https://mockk.io/) - Mocking library
