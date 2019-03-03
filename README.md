@@ -27,7 +27,7 @@ Firstly, I created a pending invoices publisher.
 It works in pull manner which means it publishes next elements only when subscriber request them (`sink.onRequest`). 
 Then I focused on charging a single invoice and handling all corner cases. It runs on [elastic scheduler](https://projectreactor.io/docs/core/release/api/reactor/core/scheduler/Schedulers.html#elastic--)
 that is a good choice for I/O blocking work.
-I added a timeout of 5s (could be configurable) and assumed it's worth retrying 
+I added a timeout of 5s (could be configurable) and thought it's worth retrying 
 similar to network exception using exponential backoff strategy. 
 I assumed our external payment provider request is idempotent so it's safe to call it multiple times with the same invoice. 
 Otherwise, they would have provided `status` method or something similar.
