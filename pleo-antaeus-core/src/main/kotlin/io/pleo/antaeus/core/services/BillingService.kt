@@ -19,10 +19,8 @@ class BillingService(
             val customer = customerService.fetch(it.customerId)
             validateInvoiceCurrency(it, customer)
             validateValueRange(it)
-            // TODO write validate payment function
-              validatePayment()
+            validatePayment(it)
         }
-        println("Total amount of pending invoices is now ${invoiceService.fetchAll().filter {it.status == InvoiceStatus.PENDING}.count()}")
     }
 
     private fun validateInvoiceCurrency(invoice: Invoice, customer: Customer) {
@@ -37,7 +35,17 @@ class BillingService(
         if (invoice.amount.value !in BigDecimal.ONE..BigDecimal.valueOf(500)) throw MoneyValueOutOfRangeException(invoice.id)
     }
 
-    private fun validatePayment() {
-
+    private fun validatePayment(invoice: Invoice): Invoice {
+        for(i in 0..2) {
+            try {
+                when {
+                    paymentProvider.charge(invoice) -> invoiceService.updateStatus(invoice.id, InvoiceStatus.PAID)
+                }
+            }
+            catch (e: NetworkException) {
+                println("Network Exception caught")
+            }
+        }
+        return invoice
     }
 }

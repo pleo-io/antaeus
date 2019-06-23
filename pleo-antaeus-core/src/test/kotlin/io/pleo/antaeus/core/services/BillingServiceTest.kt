@@ -25,11 +25,6 @@ class BillingServiceTest {
 
     private val customer1 = Customer(1, Currency.DKK)
     private val customer2 = Customer(2, Currency.EUR)
-
-    private val invoices = mockk<AntaeusDal> {
-        every { fetchInvoices() } returns listOf(invoice1, invoice2, invoice3, invoice4, invoice5, invoice6)
-    }
-
     private val customers = mockk<AntaeusDal> {
         every {fetchCustomers() } returns listOf(customer1, customer2)
         every {fetchCustomer(customer1.id)} returns customer1
