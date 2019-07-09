@@ -24,6 +24,14 @@ fun Project.kotlinProject() {
         "testImplementation"("org.junit.jupiter:junit-jupiter-api:$junitVersion")
         "testImplementation"("org.junit.jupiter:junit-jupiter-params:$junitVersion")
         "runtime"("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+
+        //kotlin-reactor
+        "implementation"("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0-M2")
+        "implementation"("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.3.0-M2")
+
+        //reactor-test
+        "testImplementation"("io.projectreactor:reactor-test:3.1.0.RELEASE")
+
     }
 }
 
