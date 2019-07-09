@@ -1,20 +1,14 @@
 package io.pleo.antaeus.core.services
 
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
+import fixtures.Fixtures.Companion.createPendingInvoice
+import io.mockk.*
 import io.pleo.antaeus.core.external.PaymentProvider
-import io.pleo.antaeus.data.AntaeusDal
-import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
-import io.pleo.antaeus.models.Money
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
-import org.junit.jupiter.api.Assertions.*
 import reactor.test.StepVerifier
-import java.math.BigDecimal
-import kotlin.random.Random
 
 internal class BillingServiceTest {
 
@@ -24,26 +18,49 @@ internal class BillingServiceTest {
     @Test
     fun `charge all pending invoices`() {
         //given
-        val expected = createInvoice()
-        every { invoiceService.fetchPendingInvoices() } returns listOf(expected)
+        val pendingInvoice = setupPendingInvoices()
         every { paymentProvider.charge(any()) } returns true
         val billingService = BillingService(paymentProvider = paymentProvider, invoiceService = invoiceService)
 
-        //when
+        //when-then
         StepVerifier.create(billingService.chargePendingInvoices())
-                .expectNext(expected)
+                .expectNextMatches { it.status == InvoiceStatus.PAID }
                 .expectComplete()
                 .verify()
 
         //then
+        verifyInteractions(pendingInvoice, InvoiceStatus.PAID)
+    }
+
+    @Test
+    fun `charge mark invoice status as error if PaymentProvider returns false`() {
+        //given
+        val pendingInvoice = setupPendingInvoices()
+        every { paymentProvider.charge(any()) } returns false
+        val billingService = BillingService(paymentProvider = paymentProvider, invoiceService = invoiceService)
+
+        //when-then
+        StepVerifier.create(billingService.chargePendingInvoices())
+                .expectNextMatches { it.status == InvoiceStatus.ERROR }
+                .expectComplete()
+                .verify()
+
+        //then
+        verifyInteractions(pendingInvoice, InvoiceStatus.ERROR)
+
+    }
+
+    private fun setupPendingInvoices(): Invoice {
+        val expected = createPendingInvoice()
+        every { invoiceService.fetchPendingInvoices() } returns listOf(expected)
+        every { invoiceService.updateInvoiceStatus(expected, any()) } just Runs
+        return expected
+    }
+
+    private fun verifyInteractions(expected: Invoice, expectedStatus: InvoiceStatus) {
         verify { invoiceService.fetchPendingInvoices() }
+        verify { invoiceService.updateInvoiceStatus(expected, expectedStatus) }
         verify { paymentProvider.charge(expected) }
-
     }
 
-    private fun createInvoice() :Invoice {
-        return Invoice(id = 1, customerId = 1,
-                amount = Money(BigDecimal.valueOf(1L), Currency.EUR),
-                status = InvoiceStatus.PENDING)
-    }
 }

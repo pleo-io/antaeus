@@ -2,6 +2,8 @@ package io.pleo.antaeus.core.services
 
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.models.Invoice
+import io.pleo.antaeus.models.InvoiceStatus
+import io.pleo.antaeus.models.InvoiceStatus.*
 import mu.KotlinLogging
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -24,12 +26,15 @@ class BillingService(private val paymentProvider: PaymentProvider, private val i
     }
 
     private fun chargeInvoice(invoice: Invoice): Mono<Boolean> {
-        return Mono.fromCallable { paymentProvider.charge(invoice) }
+        return Mono.fromCallable {
+            paymentProvider.charge(invoice)
+        }
     }
 
     private fun updateInvoiceStatus(invoice: Invoice, charged: Boolean): Mono<Invoice> {
-        //TODO: update db here based on the success of the charge
-        return Mono.just(invoice)
+        val newStatus = if (charged) PAID else ERROR
+        invoiceService.updateInvoiceStatus(invoice, newStatus)
+        return Mono.just(invoice.copy(status = newStatus))
     }
 
 }

@@ -1,8 +1,8 @@
 package io.pleo.antaeus.core.services
 
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
+import fixtures.Fixtures.Companion.createPaidInvoice
+import fixtures.Fixtures.Companion.createPendingInvoice
+import io.mockk.*
 import io.pleo.antaeus.core.exceptions.InvoiceNotFoundException
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.Currency
@@ -44,5 +44,20 @@ class InvoiceServiceTest {
         //then
         assertEquals(actual, listOf(expected))
         verify { dal.fetchPendingInvoices() }
+    }
+
+    @Test
+    fun `update invoice status`() {
+        //given
+        val dal = mockk<AntaeusDal>()
+        val expected = createPaidInvoice()
+        every { dal.updateInvoiceStatus(any(), any()) } just Runs
+        val invoiceService = InvoiceService(dal = dal)
+
+        //when
+        invoiceService.updateInvoiceStatus(expected, InvoiceStatus.PAID)
+
+        //then
+        verify { dal.updateInvoiceStatus(eq(expected), eq(InvoiceStatus.PAID)) }
     }
 }
