@@ -1,5 +1,6 @@
 package io.pleo.antaeus.core.services
 
+import io.pleo.antaeus.core.exceptions.InsufficientFundsException
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
@@ -17,7 +18,8 @@ class BillingService(private val paymentProvider: PaymentProvider, private val i
         return fetchPendingInvoices()
                 .flatMap { invoice ->
                     chargeInvoice(invoice)
-                            .flatMapMany { updateInvoiceStatus(invoice, it) }
+                            .flatMap { processInvoicePayment(invoice, it) }
+                            .onErrorResume { processPaymentError(invoice, it) }
                 }
     }
 
@@ -31,8 +33,19 @@ class BillingService(private val paymentProvider: PaymentProvider, private val i
         }
     }
 
-    private fun updateInvoiceStatus(invoice: Invoice, charged: Boolean): Mono<Invoice> {
-        val newStatus = if (charged) PAID else ERROR
+    private fun processPaymentError(invoice: Invoice, error: Throwable): Mono<Invoice> {
+        //TODO: save error reason in DB
+        return updateStatus(invoice, ERROR)
+    }
+
+    private fun processInvoicePayment(invoice: Invoice, isCharged: Boolean): Mono<Invoice> {
+        return when (isCharged) {
+            true -> updateStatus(invoice, PAID)
+            else -> throw InsufficientFundsException(invoice.id, invoice.customerId)
+        }
+    }
+
+    private fun updateStatus(invoice: Invoice, newStatus: InvoiceStatus): Mono<Invoice> {
         invoiceService.updateInvoiceStatus(invoice, newStatus)
         return Mono.just(invoice.copy(status = newStatus))
     }

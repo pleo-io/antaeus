@@ -2,6 +2,10 @@ package io.pleo.antaeus.core.services
 
 import fixtures.Fixtures.Companion.createPendingInvoice
 import io.mockk.*
+import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
+import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
+import io.pleo.antaeus.core.exceptions.InsufficientFundsException
+import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
@@ -14,13 +18,13 @@ internal class BillingServiceTest {
 
     private val invoiceService = mockk<InvoiceService>()
     private val paymentProvider = mockk<PaymentProvider>()
+    private val billingService = BillingService(paymentProvider = paymentProvider, invoiceService = invoiceService)
 
     @Test
     fun `charge all pending invoices`() {
         //given
         val pendingInvoice = setupPendingInvoices()
         every { paymentProvider.charge(any()) } returns true
-        val billingService = BillingService(paymentProvider = paymentProvider, invoiceService = invoiceService)
 
         //when-then
         StepVerifier.create(billingService.chargePendingInvoices())
@@ -37,7 +41,56 @@ internal class BillingServiceTest {
         //given
         val pendingInvoice = setupPendingInvoices()
         every { paymentProvider.charge(any()) } returns false
-        val billingService = BillingService(paymentProvider = paymentProvider, invoiceService = invoiceService)
+
+        //when-then
+        StepVerifier.create(billingService.chargePendingInvoices())
+                .expectNextMatches { it.status == InvoiceStatus.ERROR }
+                .expectComplete()
+                .verify()
+
+        //then
+        verifyInteractions(pendingInvoice, InvoiceStatus.ERROR)
+    }
+
+    @Test
+    fun `should mark invoice status as error if PaymentProvider throws a CustomerNotFoundException`() {
+        //given
+        val pendingInvoice = setupPendingInvoices()
+        every { paymentProvider.charge(any()) } throws CustomerNotFoundException(pendingInvoice.customerId)
+
+        //when-then
+        StepVerifier.create(billingService.chargePendingInvoices())
+                .expectNextMatches { it.status == InvoiceStatus.ERROR }
+                .expectComplete()
+                .verify()
+
+        //then
+        verifyInteractions(pendingInvoice, InvoiceStatus.ERROR)
+
+    }
+
+    @Test
+    fun `should mark invoice status as error if PaymentProvider throws a NetworkException`() {
+        //given
+        val pendingInvoice = setupPendingInvoices()
+        every { paymentProvider.charge(any()) } throws NetworkException()
+
+        //when-then
+        StepVerifier.create(billingService.chargePendingInvoices())
+                .expectNextMatches { it.status == InvoiceStatus.ERROR }
+                .expectComplete()
+                .verify()
+
+        //then
+        verifyInteractions(pendingInvoice, InvoiceStatus.ERROR)
+
+    }
+
+    @Test
+    fun `should mark invoice status as error if PaymentProvider throws a CurrencyMismatchException`() {
+        //given
+        val pendingInvoice = setupPendingInvoices()
+        every { paymentProvider.charge(any()) } throws CurrencyMismatchException(pendingInvoice.id, pendingInvoice.customerId)
 
         //when-then
         StepVerifier.create(billingService.chargePendingInvoices())
