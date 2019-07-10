@@ -20,6 +20,7 @@ import java.time.Duration.ofMillis
 class BillingService(private val paymentProvider: PaymentProvider, private val invoiceService: InvoiceService) {
 
     private val logger = KotlinLogging.logger {}
+
     private val networkExceptionRetry: Retry<Any> = Retry.anyOf<Any>(NetworkException::class.java)
             .retryMax(3)
             .exponentialBackoff(ofMillis(1000), null)
@@ -40,10 +41,13 @@ class BillingService(private val paymentProvider: PaymentProvider, private val i
     private fun chargeInvoice(invoice: Invoice): Mono<Boolean> {
         return Mono.fromCallable {
             paymentProvider.charge(invoice)
+        }.doOnSuccess {
+            logger.info { "Successfully charged invoice '${invoice.id}' to customer '${invoice.customerId}'." }
         }.retryWhen(networkExceptionRetry)
     }
 
     private fun processPaymentError(invoice: Invoice, error: Throwable): Mono<Invoice> {
+        logger.error { "Error processing Invoice ${invoice.id}. Its status will be 'error' in the db." }
         return updateStatus(invoice, ERROR, error.cause?.message ?: error.message)
     }
 

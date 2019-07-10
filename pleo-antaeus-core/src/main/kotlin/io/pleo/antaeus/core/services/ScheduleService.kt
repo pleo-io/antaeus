@@ -3,9 +3,11 @@ package io.pleo.antaeus.core.services
 import com.github.shyiko.skedule.Schedule
 import io.pleo.antaeus.models.Invoice
 import mu.KotlinLogging
+import reactor.core.publisher.Flux
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.time.ZonedDateTime
+import kotlin.system.measureTimeMillis
 
 
 class ScheduleService(private val billingService: BillingService) {
@@ -22,7 +24,11 @@ class ScheduleService(private val billingService: BillingService) {
         val now = ZonedDateTime.now()
         executor.schedule(
                 {
-                    chargeInvoices()
+                    logger.info { "Starting invoice processing job" }
+                    val time = measureTimeMillis {
+                        chargeInvoices()
+                    }
+                    logger.info { "Finished invoice processing job in $time ms" }
                     scheduleInvoiceJob(Schedule.parse("every 1 minutes").next(now).toEpochSecond() - now.toEpochSecond())
                 },
                 nextRun,
@@ -31,14 +37,13 @@ class ScheduleService(private val billingService: BillingService) {
     }
 
     private fun chargeInvoices() {
-        val chargedInvoices = billingService.chargePendingInvoices().collectList().block()
-        logger.info { "Finished invoice processing job. Processed ${chargedInvoices?.size} invoices." }
-        printReport(chargedInvoices)
+        billingService.chargePendingInvoices()
+                .groupBy(Invoice::status)
+                .flatMap(Flux<Invoice>::collectList)
+                .subscribe { printReport(it) }
     }
 
     private fun printReport(processedInvoices: List<Invoice>?) {
-        processedInvoices?.forEach {
-            logger.info { "Charged invoice '${it.id}' to customer '${it.customerId}'. Its status is '${it.status.name}'." }
-        }
+            logger.info { "${processedInvoices?.size} invoices were charged with status ${processedInvoices?.get(0)?.status?.name}." }
     }
 }
