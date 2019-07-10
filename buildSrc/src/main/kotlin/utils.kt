@@ -28,6 +28,8 @@ fun Project.kotlinProject() {
         //kotlin-reactor
         "implementation"("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0-M2")
         "implementation"("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.3.0-M2")
+        "implementation"("io.projectreactor.addons:reactor-extra:3.2.3.RELEASE")
+
 
         //reactor-test
         "testImplementation"("io.projectreactor:reactor-test:3.1.0.RELEASE")

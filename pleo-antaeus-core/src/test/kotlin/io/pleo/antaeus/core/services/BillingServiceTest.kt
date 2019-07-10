@@ -87,6 +87,23 @@ internal class BillingServiceTest {
     }
 
     @Test
+    fun `should retry 3 times if PaymentProvider throws a NetworkException on initial attempt`() {
+        //given
+        val pendingInvoice = setupPendingInvoices()
+        every { paymentProvider.charge(any()) } throws NetworkException()
+
+        //when-then
+        StepVerifier.create(billingService.chargePendingInvoices())
+                .expectNextMatches { it.status == InvoiceStatus.ERROR }
+                .expectComplete()
+                .verify()
+
+        //then
+        verify(exactly = 4) { paymentProvider.charge(pendingInvoice) }
+
+    }
+
+    @Test
     fun `should mark invoice status as error if PaymentProvider throws a CurrencyMismatchException`() {
         //given
         val pendingInvoice = setupPendingInvoices()
