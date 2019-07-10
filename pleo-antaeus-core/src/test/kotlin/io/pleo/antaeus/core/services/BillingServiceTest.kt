@@ -120,6 +120,35 @@ internal class BillingServiceTest {
 
     }
 
+    @Test
+    fun `should charge all invoices if errors occur in between processing invoices`() {
+        //given
+        val pendingFirst = createPendingInvoice()
+        val pendingSecond = createPendingInvoice()
+        val pendingThird = createPendingInvoice()
+        val pendingFourth = createPendingInvoice()
+        val pendingFifth = createPendingInvoice()
+
+        every { invoiceService.fetchPendingInvoices() } returns listOf(pendingFirst, pendingSecond, pendingThird, pendingFourth, pendingFifth)
+        every { invoiceService.updateInvoiceStatus(any(), any()) } just Runs
+
+        every { paymentProvider.charge(pendingFirst) } throws CurrencyMismatchException(pendingFirst.id, pendingFirst.customerId)
+        every { paymentProvider.charge(pendingSecond) } returns true
+        every { paymentProvider.charge(pendingThird) } throws CustomerNotFoundException(pendingThird.customerId)
+        every { paymentProvider.charge(pendingFourth) } returns false
+        every { paymentProvider.charge(pendingFifth) } returns true
+
+        //when-then
+        StepVerifier.create(billingService.chargePendingInvoices())
+                .expectNextMatches { it.status == InvoiceStatus.ERROR }
+                .expectNextMatches { it.status == InvoiceStatus.PAID }
+                .expectNextMatches { it.status == InvoiceStatus.ERROR }
+                .expectNextMatches { it.status == InvoiceStatus.ERROR }
+                .expectNextMatches { it.status == InvoiceStatus.PAID }
+                .expectComplete()
+                .verify()
+    }
+
     private fun setupPendingInvoices(): Invoice {
         val expected = createPendingInvoice()
         every { invoiceService.fetchPendingInvoices() } returns listOf(expected)

@@ -109,7 +109,8 @@ With all of the above in mind, I'm not going to build all of that. Here is list 
  
  5. Remote calls should be done asynchronously to boost throughput.
  
- 6. When all invoices are processed, the `status` column should be updated to either "PAID" or "ERROR" based on the `error`
- column of the processed table (This step should not be done until all invoices have finished processing) 
-
+ 6. After the invoice job processing job runs, all invoices should either have status `paid` or `error`. In the event of 
+ an system error/bug (as described in 4. for example), we should not risk charging customers twice. So there should be 
+ an "integrity" check done after the invoice job which marks the unknown invoices status. These could then be manually 
+ investigated.
  
