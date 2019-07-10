@@ -37,6 +37,10 @@ fun Project.kotlinProject() {
         // big props to this guy ! https://github.com/shyiko/skedule
         "implementation"("com.github.shyiko.skedule:skedule:0.4.0")
 
+        //jackson
+        "implementation"("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.8")
+
+
     }
 }
 

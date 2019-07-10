@@ -8,6 +8,7 @@ import io.pleo.antaeus.core.exceptions.InvoiceNotFoundException
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
+import io.pleo.antaeus.models.Money
 import java.lang.RuntimeException
 
 class InvoiceService(private val dal: AntaeusDal) {
@@ -25,5 +26,9 @@ class InvoiceService(private val dal: AntaeusDal) {
 
     fun updateInvoiceStatus(invoice: Invoice, newStatus: InvoiceStatus, error: String? = null) {
         dal.updateInvoiceStatus(invoice, newStatus, error)
+    }
+
+    fun saveInvoice(customerId:Int, amount : Money) {
+        dal.saveInvoice(amount, customerId)
     }
 }
