@@ -7,10 +7,12 @@
 
 package io.pleo.antaeus.app
 
+import com.github.shyiko.skedule.Schedule
 import getPaymentProvider
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.core.services.ScheduleService
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
@@ -23,6 +25,7 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import setupInitialData
 import java.sql.Connection
+import java.time.ZonedDateTime
 
 fun main() {
     // The tables to create in the database.
@@ -57,6 +60,14 @@ fun main() {
 
     // This is _your_ billing service to be included where you see fit
     val billingService = BillingService(paymentProvider = paymentProvider, invoiceService = invoiceService)
+
+    /**
+     * For the purpose of the challenge I set the initial delay to 0 here so that the job kicks off when we start the
+     * app. If we really wanted to simulate the real app, we'd pass an initial delay of (next first of month) - (now)
+     * Schedule.parse("1 of month").next(ZonedDateTime.now()).toEpochSecond() - ZonedDateTime.now().toEpochSecond()
+    */
+    ScheduleService(billingService = billingService).scheduleInvoiceJob(0)
+
 
     // Create REST web service
     AntaeusRest(

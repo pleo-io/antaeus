@@ -30,9 +30,12 @@ fun Project.kotlinProject() {
         "implementation"("org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.3.0-M2")
         "implementation"("io.projectreactor.addons:reactor-extra:3.2.3.RELEASE")
 
-
         //reactor-test
         "testImplementation"("io.projectreactor:reactor-test:3.1.0.RELEASE")
+
+        // Library to parse scheduling stuff
+        // big props to this guy ! https://github.com/shyiko/skedule
+        "implementation"("com.github.shyiko.skedule:skedule:0.4.0")
 
     }
 }
