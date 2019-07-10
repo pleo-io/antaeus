@@ -44,10 +44,11 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
-    fun updateInvoiceStatus(invoice: Invoice, invoiceStatus: InvoiceStatus) {
+    fun updateInvoiceStatus(invoice: Invoice, invoiceStatus: InvoiceStatus, errorMessage: String? = null) {
         return transaction(db) {
             InvoiceTable.update(where = { InvoiceTable.id.eq(invoice.id) }, body = {
                 it[status] = invoiceStatus.name
+                it[error] = errorMessage
             })
         }
     }

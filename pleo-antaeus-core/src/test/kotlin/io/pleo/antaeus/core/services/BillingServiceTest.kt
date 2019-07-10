@@ -49,14 +49,17 @@ internal class BillingServiceTest {
                 .verify()
 
         //then
-        verifyInteractions(pendingInvoice, InvoiceStatus.ERROR)
+        verifyInteractions(pendingInvoice,
+                InvoiceStatus.ERROR,
+                InsufficientFundsException(pendingInvoice.id, pendingInvoice.customerId).message)
     }
 
     @Test
     fun `should mark invoice status as error if PaymentProvider throws a CustomerNotFoundException`() {
         //given
         val pendingInvoice = setupPendingInvoices()
-        every { paymentProvider.charge(any()) } throws CustomerNotFoundException(pendingInvoice.customerId)
+        val customerNotFoundException = CustomerNotFoundException(pendingInvoice.customerId)
+        every { paymentProvider.charge(any()) } throws customerNotFoundException
 
         //when-then
         StepVerifier.create(billingService.chargePendingInvoices())
@@ -65,7 +68,7 @@ internal class BillingServiceTest {
                 .verify()
 
         //then
-        verifyInteractions(pendingInvoice, InvoiceStatus.ERROR)
+        verifyInteractions(pendingInvoice, InvoiceStatus.ERROR, customerNotFoundException.message)
 
     }
 
@@ -73,7 +76,8 @@ internal class BillingServiceTest {
     fun `should mark invoice status as error if PaymentProvider throws a NetworkException`() {
         //given
         val pendingInvoice = setupPendingInvoices()
-        every { paymentProvider.charge(any()) } throws NetworkException()
+        val networkException = NetworkException()
+        every { paymentProvider.charge(any()) } throws networkException
 
         //when-then
         StepVerifier.create(billingService.chargePendingInvoices())
@@ -82,7 +86,7 @@ internal class BillingServiceTest {
                 .verify()
 
         //then
-        verifyInteractions(pendingInvoice, InvoiceStatus.ERROR)
+        verifyInteractions(pendingInvoice, InvoiceStatus.ERROR, networkException.message)
 
     }
 
@@ -107,7 +111,8 @@ internal class BillingServiceTest {
     fun `should mark invoice status as error if PaymentProvider throws a CurrencyMismatchException`() {
         //given
         val pendingInvoice = setupPendingInvoices()
-        every { paymentProvider.charge(any()) } throws CurrencyMismatchException(pendingInvoice.id, pendingInvoice.customerId)
+        val currencyMismatchException = CurrencyMismatchException(pendingInvoice.id, pendingInvoice.customerId)
+        every { paymentProvider.charge(any()) } throws currencyMismatchException
 
         //when-then
         StepVerifier.create(billingService.chargePendingInvoices())
@@ -116,7 +121,7 @@ internal class BillingServiceTest {
                 .verify()
 
         //then
-        verifyInteractions(pendingInvoice, InvoiceStatus.ERROR)
+        verifyInteractions(pendingInvoice, InvoiceStatus.ERROR, currencyMismatchException.message)
 
     }
 
@@ -130,7 +135,7 @@ internal class BillingServiceTest {
         val pendingFifth = createPendingInvoice()
 
         every { invoiceService.fetchPendingInvoices() } returns listOf(pendingFirst, pendingSecond, pendingThird, pendingFourth, pendingFifth)
-        every { invoiceService.updateInvoiceStatus(any(), any()) } just Runs
+        every { invoiceService.updateInvoiceStatus(any(), any(), any()) } just Runs
 
         every { paymentProvider.charge(pendingFirst) } throws CurrencyMismatchException(pendingFirst.id, pendingFirst.customerId)
         every { paymentProvider.charge(pendingSecond) } returns true
@@ -152,13 +157,13 @@ internal class BillingServiceTest {
     private fun setupPendingInvoices(): Invoice {
         val expected = createPendingInvoice()
         every { invoiceService.fetchPendingInvoices() } returns listOf(expected)
-        every { invoiceService.updateInvoiceStatus(expected, any()) } just Runs
+        every { invoiceService.updateInvoiceStatus(expected, any(), any()) } just Runs
         return expected
     }
 
-    private fun verifyInteractions(expected: Invoice, expectedStatus: InvoiceStatus) {
+    private fun verifyInteractions(expected: Invoice, expectedStatus: InvoiceStatus, errorMsg : String? = null) {
         verify { invoiceService.fetchPendingInvoices() }
-        verify { invoiceService.updateInvoiceStatus(expected, expectedStatus) }
+        verify { invoiceService.updateInvoiceStatus(expected, expectedStatus, errorMsg) }
         verify { paymentProvider.charge(expected) }
     }
 

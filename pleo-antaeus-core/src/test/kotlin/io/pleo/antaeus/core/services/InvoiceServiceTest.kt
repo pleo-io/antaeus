@@ -58,6 +58,22 @@ class InvoiceServiceTest {
         invoiceService.updateInvoiceStatus(expected, InvoiceStatus.PAID)
 
         //then
-        verify { dal.updateInvoiceStatus(eq(expected), eq(InvoiceStatus.PAID)) }
+        verify { dal.updateInvoiceStatus(eq(expected), eq(InvoiceStatus.PAID), null) }
+    }
+
+    @Test
+    fun `update invoice status and error column if error is present`() {
+        //given
+        val dal = mockk<AntaeusDal>()
+        val expected = createPaidInvoice()
+        val errorMessage = "error message"
+        every { dal.updateInvoiceStatus(any(), any(), any()) } just Runs
+        val invoiceService = InvoiceService(dal = dal)
+
+        //when
+        invoiceService.updateInvoiceStatus(expected, InvoiceStatus.PAID, errorMessage)
+
+        //then
+        verify { dal.updateInvoiceStatus(eq(expected), eq(InvoiceStatus.PAID), eq(errorMessage)) }
     }
 }

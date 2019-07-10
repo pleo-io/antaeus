@@ -44,8 +44,7 @@ class BillingService(private val paymentProvider: PaymentProvider, private val i
     }
 
     private fun processPaymentError(invoice: Invoice, error: Throwable): Mono<Invoice> {
-        //TODO: save error reason in DB
-        return updateStatus(invoice, ERROR)
+        return updateStatus(invoice, ERROR, error.cause?.message ?: error.message)
     }
 
     private fun processInvoicePayment(invoice: Invoice, isCharged: Boolean): Mono<Invoice> {
@@ -55,8 +54,8 @@ class BillingService(private val paymentProvider: PaymentProvider, private val i
         }
     }
 
-    private fun updateStatus(invoice: Invoice, newStatus: InvoiceStatus): Mono<Invoice> {
-        invoiceService.updateInvoiceStatus(invoice, newStatus)
+    private fun updateStatus(invoice: Invoice, newStatus: InvoiceStatus, errorMsg : String? = null): Mono<Invoice> {
+        invoiceService.updateInvoiceStatus(invoice, newStatus, errorMsg)
         return Mono.just(invoice.copy(status = newStatus))
     }
 
