@@ -16,11 +16,13 @@ import java.math.BigDecimal
 
 class InvoiceServiceTest {
 
+    private val dal = mockk<AntaeusDal>()
+    private val invoiceService = InvoiceService(dal = dal)
+
+
     @Test
     fun `will throw if customer is not found`() {
-        val dal = mockk<AntaeusDal>()
         every { dal.fetchInvoice(404) } returns null
-        val invoiceService = InvoiceService(dal = dal)
         assertThrows<InvoiceNotFoundException> {
             invoiceService.fetch(404)
         }
@@ -31,12 +33,10 @@ class InvoiceServiceTest {
     @Test
     fun `returns list of pending invoices`() {
         //given
-        val dal = mockk<AntaeusDal>()
         val expected = Invoice(id = 1, customerId = 1,
                 amount = Money(BigDecimal.valueOf(1L), Currency.EUR),
                 status = InvoiceStatus.PENDING)
         every { dal.fetchPendingInvoices() } returns listOf(expected)
-        val invoiceService = InvoiceService(dal = dal)
 
         //when
         val actual = invoiceService.fetchPendingInvoices()
@@ -49,10 +49,8 @@ class InvoiceServiceTest {
     @Test
     fun `update invoice status`() {
         //given
-        val dal = mockk<AntaeusDal>()
         val expected = createPaidInvoice()
         every { dal.updateInvoiceStatus(any(), any()) } just Runs
-        val invoiceService = InvoiceService(dal = dal)
 
         //when
         invoiceService.updateInvoiceStatus(expected, InvoiceStatus.PAID)
