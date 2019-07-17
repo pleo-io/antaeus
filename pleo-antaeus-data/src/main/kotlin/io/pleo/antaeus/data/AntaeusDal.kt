@@ -38,6 +38,19 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
+    /** Simple override to create a db query based on an InvoiceStatus
+     *
+     * @param status one of the existant status for an invoice
+     * @return List<Invoice> with the filtered invoices by status
+     */
+    fun fetchInvoices(status: InvoiceStatus): List<Invoice> {
+        return transaction(db) {
+            InvoiceTable
+                .select { InvoiceTable.status.eq(status.name) }
+                .map { it.toInvoice() }
+        }
+    }
+
     fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING): Invoice? {
         val id = transaction(db) {
             // Insert the invoice and returns its new id.
@@ -49,7 +62,6 @@ class AntaeusDal(private val db: Database) {
                     it[this.customerId] = customer.id
                 } get InvoiceTable.id
         }
-
         return fetchInvoice(id!!)
     }
 
@@ -77,7 +89,6 @@ class AntaeusDal(private val db: Database) {
                 it[this.currency] = currency.toString()
             } get CustomerTable.id
         }
-
         return fetchCustomer(id!!)
     }
 }
