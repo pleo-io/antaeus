@@ -1,0 +1,36 @@
+version: "3"
+services:
+  app:
+    build: .
+    image: pleo-anteus-app:pleo-antaeus
+    volumes:
+      - pleo-antaeus-build-cache:/home/pleo/.gradlepleo-antaeus
+    ports:
+      - "7000:7000"
+    depends_on:
+      - db
+  db:
+    image: "postgres:latest"
+    env_file: .env
+    restart: always
+    ports:
+      - "54320:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_backup:/backups
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - 'rabbitmq_data:/data'
+
+volumes:
+    pleo-antaeus-build-cache:
+    postgres_data:
+    postgres_backup:
+    rabbitmq_data:
