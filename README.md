@@ -132,6 +132,28 @@ sent to contact the customer. Little random note, I have really enjoyed Kotlin s
  Elvis operator and the reason why it was named like that, hoping to see if I can use it somewhere
 haha.
 
+* Alright, back to work after a small delay, continued reading more regarding kotlin logging and
+scheduling for tasks, got done the work for a single ticket and general payment, exceptions haven't
+been implemented yet. However, I'm not 100% happy with the current single pay method, tweaked a bit
+with the charge function, added a rest endpoint to test simple validations and there seem to be
+cases where the criteria set (simply return it was paid if the amount was > 150) was true but the
+ticket didn't pay. More likely will not directly pass the given invoice in case it's wrong. The
+ideas so far include to either create a safe copy to transform or create a new function to update
+the value based on the given result from the charge() function.
+
+A quick google also revealed most java.Stream functions can be used with Lists in Kotlin and
+couldn't help but smile. Streams have been one of the Java 8+ characteristics that I've learn to
+love due to how easy many process can be achieved faster and with less resource consumption.
+Iterating through the list of invoices ready to pay was simple.
+
+Another function I'll be adding soon is a more general pay-in-bulk for the automated list of
+invoices, as the current behavior is executing the function when accessing the rest endpoint.
+Incoming automatedPaymentOfPendingInvoices() which simply takes off the previous functionality from
+the endpoint and keeps it in the bilingService. Hopefully with have done the schedulerService which
+will be the class that fires the automated payment on th 1st of the month, using the
+ScheduledExecutorService as it seems to be a slightly better option compared to Timer.
+
+
 
 
 
