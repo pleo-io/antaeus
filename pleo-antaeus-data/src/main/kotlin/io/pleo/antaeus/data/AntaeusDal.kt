@@ -38,6 +38,27 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
+
+    fun fetchInvoicesByStatus(status: InvoiceStatus): List<Invoice>{
+        return transaction(db) {
+            InvoiceTable
+                    .select {  InvoiceTable.status.eq(status.toString())}
+                    .map { it.toInvoice() }
+
+        }
+    }
+
+    fun updateInvoiceStatus(invoiceId: Int, status: InvoiceStatus) : Invoice? {
+        transaction(db) {
+            InvoiceTable
+                    .update({InvoiceTable.id.eq(invoiceId)}) {
+                        it[this.status] = status.toString()
+                    }
+        }
+
+        return fetchInvoice(invoiceId)
+    }
+
     fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING): Invoice? {
         val id = transaction(db) {
             // Insert the invoice and returns its new id.
