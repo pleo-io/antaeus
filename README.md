@@ -1,4 +1,4 @@
-##Solution provided
+## Solution provided
 
 A scheduled task will run within BillingService, once the app has started, the task will run once everyday to check if it's the first day of the month, if so, it will fetch from database all unpaid invoices and will execute the payment process. 
 
