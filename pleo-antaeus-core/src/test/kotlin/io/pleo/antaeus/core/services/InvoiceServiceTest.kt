@@ -15,7 +15,7 @@ class InvoiceServiceTest {
     private val invoiceService = InvoiceService(dal = dal)
 
     @Test
-    fun `will throw if customer is not found`() {
+    fun `will throw if invoice is not found`() {
         assertThrows<InvoiceNotFoundException> {
             invoiceService.fetch(404)
         }
