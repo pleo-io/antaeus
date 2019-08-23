@@ -6,4 +6,7 @@ class BillingService(
     private val paymentProvider: PaymentProvider
 ) {
    // TODO - Add code e.g. here
+    fun start () {
+
+   }
 }
