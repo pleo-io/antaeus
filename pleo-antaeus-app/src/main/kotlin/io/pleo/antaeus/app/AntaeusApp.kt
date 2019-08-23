@@ -16,6 +16,8 @@ import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
 import io.pleo.antaeus.rest.AntaeusRest
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -64,6 +66,10 @@ fun main() {
     )
 
     val timerService = TimerService(billingService)
+
+    GlobalScope.launch {
+        timerService.setup()
+    }
 
     // Create REST web service
     AntaeusRest(
