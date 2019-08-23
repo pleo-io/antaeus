@@ -11,6 +11,7 @@ import getPaymentProvider
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.core.services.TimerService
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
@@ -61,6 +62,8 @@ fun main() {
         invoiceService = InvoiceService(dal = dal),
         customerService = CustomerService(dal = dal)
     )
+
+    val timerService = TimerService(billingService)
 
     // Create REST web service
     AntaeusRest(
