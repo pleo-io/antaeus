@@ -32,20 +32,10 @@ There are 2 options for running Anteus. You either need libsqlite3 or docker. Do
 
 *Running through docker*
 
-Install docker for your platform
+Install docker for your platform. Start the server via
 
 ```
-make docker-run
-```
-
-*Running Natively*
-
-Native java with sqlite (requires libsqlite3):
-
-If you use homebrew on MacOS `brew install sqlite`.
-
-```
-./gradlew run
+./docker-start.sh
 ```
 
 
