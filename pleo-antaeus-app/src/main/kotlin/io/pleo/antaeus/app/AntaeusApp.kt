@@ -8,6 +8,7 @@
 package io.pleo.antaeus.app
 
 import getPaymentProvider
+import io.pleo.antaeus.app.config.AppConfiguration
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
@@ -30,7 +31,11 @@ fun main() {
 
     // Connect to the database and create the needed tables. Drop any existing data.
     val db = Database
-        .connect("jdbc:sqlite:/tmp/data.db", "org.sqlite.JDBC")
+        .connect(
+                AppConfiguration.databaseUrl,
+                AppConfiguration.databaseDriver,
+                AppConfiguration.databaseUser,
+                AppConfiguration.databasePassword)
         .also {
             TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
             transaction(it) {

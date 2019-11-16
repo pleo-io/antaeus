@@ -1,0 +1,16 @@
+version: "3.6"
+services:
+  app:
+    build:
+      context: .
+      target: "${DOCKER_STAGE}"
+    volumes:
+      - ./:/anteus
+      - pleo-antaeus-build-cache:/root/.gradle
+    env_file:
+      - compose.env
+    ports:
+      - 7000:7000
+
+volumes:
+  pleo-antaeus-build-cache:
