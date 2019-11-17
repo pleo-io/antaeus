@@ -261,6 +261,8 @@ interceptor chain pattern should be used for this purpose.
 logic, custom metrics can be employed
 - Performant and efficient - due to horizontal scalability, iterative (reactive) scheduling and little to no 
 polling threads
+- Extensible and re-usable in another problem domain - the scheduling mechanism is not tight coupled to the problem
+domain hence can be reused in another problem domain
 
 **Cons:**
 - Less infrastructure dependencies to maintain

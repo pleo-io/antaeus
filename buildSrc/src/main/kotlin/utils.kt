@@ -3,7 +3,7 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.kotlin
 
-const val junitVersion = "5.3.2"
+const val junitVersion = "5.5.1"
 
 /**
  * Configures the current project as a Kotlin project by adding the Kotlin `stdlib` as a dependency.

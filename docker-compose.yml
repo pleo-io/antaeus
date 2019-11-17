@@ -12,5 +12,16 @@ services:
     ports:
       - 7000:7000
 
+  activemq:
+    image: webcenter/activemq
+    environment:
+      - ACTIVEMQ_ADMIN_LOGIN=admin
+      - ACTIVEMQ_ADMIN_PASSWORD=admin
+      - ACTIVEMQ_JMX_LOGIN=admin
+      - ACTIVEMQ_JMX_PASSWORD=admin
+    ports:
+      - 61616:61616
+      - 8161:8161
+
 volumes:
   pleo-antaeus-build-cache:
