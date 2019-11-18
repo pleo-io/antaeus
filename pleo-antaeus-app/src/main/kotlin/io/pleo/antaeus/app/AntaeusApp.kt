@@ -10,7 +10,7 @@ package io.pleo.antaeus.app
 import getPaymentProvider
 import io.pleo.antaeus.app.config.AppConfiguration
 import io.pleo.antaeus.core.infrastructure.messaging.activemq.ActiveMQAdapter
-import io.pleo.antaeus.core.scheduler.DefaultScheduler
+import io.pleo.antaeus.core.scheduler.DelayedTaskScheduler
 import io.pleo.antaeus.core.scheduler.TaskScheduler
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
@@ -66,18 +66,28 @@ fun main() {
     // Create core services
     val invoiceService = InvoiceService(dal = dal)
     val customerService = CustomerService(dal = dal)
-    val scheduler: TaskScheduler = DefaultScheduler(Clock.systemUTC(), ActiveMQAdapter())
+    val taskScheduler: TaskScheduler = DelayedTaskScheduler(
+            clock = Clock.systemUTC(),
+            schedulingProvider = ActiveMQAdapter()
+    )
 
     // This is _your_ billing service to be included where you see fit
-    val billingService = BillingService(invoiceService, scheduler, Schedule())
+    val billingService = BillingService(
+            destinationQueue = AppConfiguration.invoiceBillingQueue,
+            billingSchedulingJobCron = AppConfiguration.billingSchedulingJobCron,
+            invoiceService = invoiceService,
+            customerService = customerService,
+            taskScheduler = taskScheduler,
+            globalBillingSchedule = Schedule()
+    )
 
     billingService.scheduleBilling()
 
-    InvoiceBillingWorker(
-            invoiceService = invoiceService,
-            preExecutionValidatorChain = listOf(ValidateInvoiceStatusInterceptor()),
-            paymentProvider = paymentProvider
-    )
+//    InvoiceBillingWorker(
+//            invoiceService = invoiceService,
+//            preExecutionValidatorChain = listOf(ValidateInvoiceStatusInterceptor()),
+//            paymentProvider = paymentProvider
+//    ).run { main() }
 
     // Create REST web service
     AntaeusRest(

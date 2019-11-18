@@ -13,7 +13,7 @@ services:
       - 7000:7000
 
   activemq:
-    image: webcenter/activemq
+    image: webcenter/activemq:latest
     environment:
       - ACTIVEMQ_ADMIN_LOGIN=admin
       - ACTIVEMQ_ADMIN_PASSWORD=admin

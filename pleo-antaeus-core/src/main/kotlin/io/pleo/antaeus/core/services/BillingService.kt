@@ -4,55 +4,58 @@ import io.pleo.antaeus.core.infrastructure.dto.InvoiceBillingWorkerDTO
 import io.pleo.antaeus.core.scheduler.TaskScheduler
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Schedule
+import mu.KotlinLogging
 import org.quartz.*
 import org.quartz.impl.StdSchedulerFactory
 
-
-private const val CRON_EXPRESSION = "1 * * * * ?" // run every hour
-
-private const val JOB_NAME = "billingSchedulingJob"
-
-private const val TRIGGER_NAME = "billingSchedulingTrigger"
-
 class BillingService(
+        private val destinationQueue: String,
+        private val billingSchedulingJobCron: String,
         private val invoiceService: InvoiceService,
+        private val customerService: CustomerService,
         private val taskScheduler: TaskScheduler,
-        private val schedule: Schedule
+        private val globalBillingSchedule: Schedule
 ) {
-    private val scheduler: Scheduler = StdSchedulerFactory().scheduler
-    private val job: JobDetail
-    private val trigger: Trigger
+    private val triggerName = "billingSchedulingTrigger"
+    private val jobName = "billingSchedulingJob"
+
+    private val cronJobScheduler: Scheduler = StdSchedulerFactory().scheduler
+    private val cronJob: JobDetail
+    private val cronJobTrigger: Trigger
 
     init {
-        job = JobBuilder
+        cronJob = JobBuilder
                 .newJob(BillingSchedulingJob::class.java)
-                .withIdentity(JOB_NAME)
+                .withIdentity(jobName)
                 .build()
 
-        trigger = TriggerBuilder.newTrigger()
-                .withIdentity(TRIGGER_NAME)
-                .withSchedule(CronScheduleBuilder.cronScheduleNonvalidatedExpression(CRON_EXPRESSION))
+        cronJobTrigger = TriggerBuilder
+                .newTrigger()
+                .withIdentity(triggerName)
+                .withSchedule(CronScheduleBuilder.cronScheduleNonvalidatedExpression(billingSchedulingJobCron))
                 .usingJobData(
                         JobDataMap(
                                 mapOf(
+                                        "destinationQueue" to destinationQueue,
                                         "invoiceService" to invoiceService,
+                                        "customerService" to customerService,
                                         "taskScheduler" to taskScheduler,
-                                        "schedule" to schedule
+                                        "globalBillingSchedule" to globalBillingSchedule
                                 )
                         )
                 )
-                .forJob(job)
+                .forJob(cronJob)
                 .build()
     }
 
     fun scheduleBilling(): Boolean {
         try {
             when {
-                !scheduler.isStarted -> {
-                    scheduler.scheduleJob(job, trigger)
-                    scheduler.start()
+                !cronJobScheduler.isStarted -> {
+                    cronJobScheduler.scheduleJob(cronJob, cronJobTrigger)
+                    cronJobScheduler.start()
                 }
-                else -> scheduler.rescheduleJob(TriggerKey.triggerKey(TRIGGER_NAME), trigger)
+                else -> cronJobScheduler.rescheduleJob(TriggerKey.triggerKey(triggerName), cronJobTrigger)
             }
             return true
         }
@@ -62,26 +65,38 @@ class BillingService(
     }
 
     class BillingSchedulingJob : Job {
-        private val destination = "invoice-billing"
+        private val logger = KotlinLogging.logger {}
 
         override fun execute(context: JobExecutionContext) {
-
+            val destinationQueue = context.mergedJobDataMap["destinationQueue"] as String
             val invoiceService = context.mergedJobDataMap["invoiceService"] as InvoiceService
+            val customerService = context.mergedJobDataMap["customerService"] as CustomerService
             val taskScheduler = context.mergedJobDataMap["taskScheduler"] as TaskScheduler
-            val schedule = context.mergedJobDataMap["schedule"] as Schedule
+            val globalBillingSchedule = context.mergedJobDataMap["globalBillingSchedule"] as Schedule
 
             try {
-                invoiceService.fetchAllPending().forEach {
-                    val scheduled = taskScheduler.schedule(
-                            destination = destination,
-                            payload = InvoiceBillingWorkerDTO(invoiceId = it.id),
-                            schedule = schedule)
+                val outstandingInvoices = invoiceService.fetchAllPending()
+                if (outstandingInvoices.isEmpty())  {
+                    logger.info("There are no pending invoices to schedule")
+                    return
+                }
+                outstandingInvoices.forEach {
+                    // precedence order: invoice schedule -> customer schedule -> global schedule
+                    val billingSchedule = it.billingSchedule
+                            ?: customerService.fetch(it.customerId).billingSchedule
+                            ?: globalBillingSchedule
 
+                    val scheduled = taskScheduler.schedule(
+                            destination = destinationQueue,
+                            payload = InvoiceBillingWorkerDTO(invoiceId = it.id),
+                            schedule = billingSchedule
+                    )
                     if (scheduled) invoiceService.updateStatus(it.id, InvoiceStatus.SCHEDULED)
                 }
             }
-            catch (e: Exception) {
-                throw JobExecutionException(e, true)
+            catch (ex: Exception) {
+                logger.error(ex) { "An error: '${ex.message}' has occurred" }
+                throw JobExecutionException(ex, true)
             }
         }
     }
