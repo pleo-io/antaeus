@@ -9,12 +9,18 @@ package io.pleo.antaeus.app
 
 import getPaymentProvider
 import io.pleo.antaeus.app.config.AppConfiguration
+import io.pleo.antaeus.core.infrastructure.messaging.activemq.ActiveMQAdapter
+import io.pleo.antaeus.core.scheduler.DefaultScheduler
+import io.pleo.antaeus.core.scheduler.TaskScheduler
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.core.workers.billing.InvoiceBillingWorker
+import io.pleo.antaeus.core.workers.billing.validator.ValidateInvoiceStatusInterceptor
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
+import io.pleo.antaeus.models.Schedule
 import io.pleo.antaeus.rest.AntaeusRest
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -24,6 +30,7 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import setupInitialData
 import java.sql.Connection
+import java.time.Clock
 
 fun main() {
     // The tables to create in the database.
@@ -59,9 +66,18 @@ fun main() {
     // Create core services
     val invoiceService = InvoiceService(dal = dal)
     val customerService = CustomerService(dal = dal)
+    val scheduler: TaskScheduler = DefaultScheduler(Clock.systemUTC(), ActiveMQAdapter())
 
     // This is _your_ billing service to be included where you see fit
-    val billingService = BillingService(paymentProvider = paymentProvider)
+    val billingService = BillingService(invoiceService, scheduler, Schedule())
+
+    billingService.scheduleBilling()
+
+    InvoiceBillingWorker(
+            invoiceService = invoiceService,
+            preExecutionValidatorChain = listOf(ValidateInvoiceStatusInterceptor()),
+            paymentProvider = paymentProvider
+    )
 
     // Create REST web service
     AntaeusRest(

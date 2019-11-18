@@ -5,7 +5,7 @@ import io.pleo.antaeus.models.Schedule
 /**
  * An interface for the scheduling service
  */
-interface Scheduler {
+interface TaskScheduler {
 
-    fun schedule(message: String, schedule: Schedule) : Boolean
+    fun schedule(destination: String, payload: Any, schedule: Schedule) : Boolean
 }

@@ -19,6 +19,7 @@ services:
       - ACTIVEMQ_ADMIN_PASSWORD=admin
       - ACTIVEMQ_JMX_LOGIN=admin
       - ACTIVEMQ_JMX_PASSWORD=admin
+      - ACTIVEMQ_CONFIG_SCHEDULERENABLED=true
     ports:
       - 61616:61616
       - 8161:8161
