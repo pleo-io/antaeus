@@ -10,6 +10,7 @@ import java.util.Date
 import java.util.TimeZone
 import mu.KotlinLogging
 import org.quartz.CronExpression
+import java.time.Instant
 
 /**
  * An implementation of TaskScheduler based on delayed scheduled queueing.
@@ -37,7 +38,7 @@ class DelayedTaskScheduler(
 
     override fun schedule(destination: String, payload: Any, schedule: Schedule): Boolean {
         return try {
-            // TODO: apply timezones
+            // TODO: apply timezones correctly
             val timeZone = schedule.timeZone ?: utcTimeZone
             val timeToSchedule = this.scheduleDateTimeFromCron(schedule.cronExpression)
             val message = JsonSerializationHelper.serializeToJson(payload)
@@ -54,20 +55,15 @@ class DelayedTaskScheduler(
         }
     }
 
-    private fun calculateDelayMs(scheduleTime: OffsetDateTime): Long {
+    private fun calculateDelayMs(scheduleTime: Date): Long {
         return scheduleTime.toInstant().toEpochMilli() - this.currentDateTime().toInstant().toEpochMilli()
     }
 
-    private fun scheduleDateTimeFromCron(expression: String): OffsetDateTime {
-        val currentDateTime = Date.from(this.currentDateTime().toInstant())
-        return CronExpression(expression)
-                .getNextValidTimeAfter(currentDateTime)
-                .toInstant()
-                .atZone(ZoneId.systemDefault())
-                .toOffsetDateTime()
+    private fun scheduleDateTimeFromCron(expression: String): Date {
+        return CronExpression(expression).getNextValidTimeAfter(this.currentDateTime())
     }
 
-    private fun currentDateTime(): OffsetDateTime {
-        return OffsetDateTime.now(this.clock)
+    private fun currentDateTime(): Date {
+        return Date.from(Instant.now(this.clock))
     }
 }

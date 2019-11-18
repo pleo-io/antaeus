@@ -12,7 +12,7 @@
 
 As most "Software as a Service" (SaaS) companies, Pleo needs to charge a subscription fee every month. 
 Our database contains a few invoices for the different markets in which we operate.
-These invoices have an identifier, a reference to a customer, an amount and a status as enumerated below:
+These invoices have an identifier, a reference to a customer, an amount and a status as shown below:
 
 ```kotlin
 data class Invoice(
@@ -195,7 +195,7 @@ and [ActiveMQ](https://activemq.apache.org/delay-and-schedule-message-delivery) 
 
 The storage strategy is an important detail for the efficiency of the background scheduler thread which just reads
 messages which are scheduled for earliest processing rather than having to poll every message to determine readiness.
-Moreover, delivering the most ready tasks first is always guarantee.
+Moreover, delivering the most ready tasks first is always guaranteed.
 
 This solution proposes the use of the delay and schedule feature of ActiveMQ to schedule invoice billing for execution
 at a later time. Scheduling can happen way in advance of the target billing date e.g. on daily, on invoice creation etc.

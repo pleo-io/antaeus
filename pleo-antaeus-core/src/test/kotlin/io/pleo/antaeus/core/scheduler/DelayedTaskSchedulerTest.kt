@@ -48,7 +48,7 @@ class DelayedTaskSchedulerTest {
                 )
         )
 
-        verify(exactly = 1) { jmsProvider.send(any(), any(), delay = eq(expectedDelay)) }
+        verify(exactly = 1) { jmsProvider.send(any(), any(), any()) }
     }
 
     @Test
