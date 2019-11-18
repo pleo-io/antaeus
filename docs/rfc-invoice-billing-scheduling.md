@@ -113,6 +113,8 @@ explicitness and compensating or manual mechanisms are desired.
 
 Using the [Quartz Scheduler](http://www.quartz-scheduler.org) makes cancelling and rescheduling jobs possible.
 
+Below is a sequence diagram representing the flow:
+
 ![](img/cron-based-scheduling-transparent.png)
 
 This solution has the following pros and cons:
@@ -137,7 +139,7 @@ with this solution.
 - Not suited for complex, event-driven tasks
 - Cron does not offer tight scheduling constraints (neither sub-second, nor near-real-time)
 
-#### 3.2 Solution 2: Time-based delay queue scheduling
+#### 3.2 Solution 2: Time-based delay queue scheduling (preferred)
 This solution tries to overcome some of the limitations of solution 1 by a leveraging delayed task processor
 (also called a background processor, asynchronous task queue etc).
 
@@ -204,6 +206,8 @@ The choice of ActiveMQ over Redis in spite of both having sorted persistence of 
 fact that ActiveMQ is a dedicated MOM optimized for reading messages, one at a time, with queue deadlock management 
 guaranteeing an at most once delivery; very desirable in a system involving payments. 
 With Redis, deadlock management and at most once delivery guarantees would have to be handled by the application.
+
+Below is a sequence diagram representing the flow:
 
 ![](img/time-based-delay-queue-scheduling-transparent.png)
 

@@ -13,9 +13,9 @@ import org.quartz.CronExpression
 import java.time.Instant
 
 /**
- * An implementation of TaskScheduler based on delayed scheduled queueing.
+ * An implementation of [TaskScheduler] based on delayed scheduled queueing.
  * Applies a supplied Schedule to generate a delay for use in scheduling a
- * task which is delegated to a JmsProvider.
+ * task which is delegated to a [JmsProvider].
  *
  * Constructor Dependency Injection favored to allow flexibility in testing.
  * The Clock dependency is rather important in this regard as it can be
@@ -26,7 +26,7 @@ import java.time.Instant
  * a GMT+0300 timezone and the desired billing time is the first of every
  * month e.g. 1 January 00:00:00, we want to delay this billing task in
  * such a way that that local time is achieved despite having servers
- * elsewhere.
+ * running the task elsewhere.
  */
 class DelayedTaskScheduler(
         private val clock: Clock,

@@ -1,10 +1,10 @@
 package io.pleo.antaeus.core.infrastructure.messaging.jms
 
 import io.pleo.antaeus.core.infrastructure.messaging.activemq.connection.ConnectionFactory
-import mu.KotlinLogging
 import javax.jms.JMSException
 import javax.jms.MessageListener
 import javax.jms.Session
+import mu.KotlinLogging
 
 /**
  * Abstract class extending a [MessageListener] implementing an
