@@ -1,12 +1,13 @@
 package io.pleo.antaeus.core.services
 
-import io.pleo.antaeus.core.infrastructure.dto.InvoiceBillingWorkerDTO
+import io.pleo.antaeus.core.infrastructure.dto.InvoiceBillingWorkerTaskDTO
 import io.pleo.antaeus.core.scheduler.TaskScheduler
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Schedule
 import mu.KotlinLogging
 import org.quartz.*
 import org.quartz.impl.StdSchedulerFactory
+import java.time.OffsetDateTime
 
 class BillingService(
         private val destinationQueue: String,
@@ -88,7 +89,10 @@ class BillingService(
 
                     val scheduled = taskScheduler.schedule(
                             destination = destinationQueue,
-                            payload = InvoiceBillingWorkerDTO(invoiceId = it.id),
+                            payload = InvoiceBillingWorkerTaskDTO(
+                                    invoiceId = it.id,
+                                    scheduledOn = OffsetDateTime.now()
+                            ),
                             schedule = billingSchedule
                     )
                     if (scheduled) invoiceService.updateStatus(it.id, InvoiceStatus.SCHEDULED)

@@ -7,6 +7,7 @@
 
 package io.pleo.antaeus.app
 
+import getCurrencyConversionProvider
 import getPaymentProvider
 import io.pleo.antaeus.app.config.AppConfiguration
 import io.pleo.antaeus.core.infrastructure.messaging.activemq.ActiveMQAdapter
@@ -22,6 +23,9 @@ import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
 import io.pleo.antaeus.models.Schedule
 import io.pleo.antaeus.rest.AntaeusRest
+import java.sql.Connection
+import java.time.Clock
+import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -29,8 +33,8 @@ import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import setupInitialData
-import java.sql.Connection
-import java.time.Clock
+
+private val logger = KotlinLogging.logger {}
 
 fun main() {
     // The tables to create in the database.
@@ -42,7 +46,8 @@ fun main() {
                 AppConfiguration.databaseUrl,
                 AppConfiguration.databaseDriver,
                 AppConfiguration.databaseUser,
-                AppConfiguration.databasePassword)
+                AppConfiguration.databasePassword
+        )
         .also {
             TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
             transaction(it) {
@@ -62,11 +67,13 @@ fun main() {
 
     // Get third parties
     val paymentProvider = getPaymentProvider()
+    val currencyConversionProvider = getCurrencyConversionProvider()
 
     // Create core services
     val invoiceService = InvoiceService(dal = dal)
     val customerService = CustomerService(dal = dal)
-    val taskScheduler: TaskScheduler = DelayedTaskScheduler(
+
+    val billingTaskScheduler: TaskScheduler = DelayedTaskScheduler(
             clock = Clock.systemUTC(),
             schedulingProvider = ActiveMQAdapter()
     )
@@ -77,17 +84,25 @@ fun main() {
             billingSchedulingJobCron = AppConfiguration.billingSchedulingJobCron,
             invoiceService = invoiceService,
             customerService = customerService,
-            taskScheduler = taskScheduler,
-            globalBillingSchedule = Schedule()
+            taskScheduler = billingTaskScheduler,
+            globalBillingSchedule = Schedule(AppConfiguration.defaultTaskDelayCron)
     )
 
     billingService.scheduleBilling()
 
-//    InvoiceBillingWorker(
-//            invoiceService = invoiceService,
-//            preExecutionValidatorChain = listOf(ValidateInvoiceStatusInterceptor()),
-//            paymentProvider = paymentProvider
-//    ).run { main() }
+    // Start invoice billing workers
+    for (concurrency in 1..AppConfiguration.billingWorkerConcurrency) {
+        logger.info { "Starting ${AppConfiguration.billingWorkerConcurrency} invoice billing workers" }
+        Thread {
+            InvoiceBillingWorker(
+                    customerService = customerService,
+                    invoiceService = invoiceService,
+                    preExecutionValidatorChain = listOf(ValidateInvoiceStatusInterceptor()),
+                    paymentProvider = paymentProvider,
+                    currencyConversionProvider = currencyConversionProvider
+            ).listen()
+        }.start()
+    }
 
     // Create REST web service
     AntaeusRest(
@@ -95,4 +110,3 @@ fun main() {
         customerService = customerService
     ).run()
 }
-

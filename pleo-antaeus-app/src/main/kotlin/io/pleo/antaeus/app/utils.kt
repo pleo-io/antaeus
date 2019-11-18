@@ -1,4 +1,5 @@
 
+import io.pleo.antaeus.core.external.CurrencyConversionProvider
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.Currency
@@ -35,6 +36,15 @@ internal fun getPaymentProvider(): PaymentProvider {
     return object : PaymentProvider {
         override fun charge(invoice: Invoice): Boolean {
                 return Random.nextBoolean()
+        }
+    }
+}
+
+// Mocked instance of the currency conversion provider
+internal fun getCurrencyConversionProvider(): CurrencyConversionProvider {
+    return object: CurrencyConversionProvider {
+        override fun convert(amount: Money, target: Currency): Money {
+            return Money(BigDecimal(Random.nextInt(1, 100)), target)
         }
     }
 }

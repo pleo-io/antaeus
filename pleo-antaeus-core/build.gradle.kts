@@ -4,7 +4,6 @@ plugins {
 
 val activeMQVersion = "5.7.0"
 val quartzSchedulerVersion = "2.3.1"
-val moshiVersion = "1.9.1"
 val jacksonVersion = "2.10.1"
 
 kotlinProject()
@@ -16,10 +15,8 @@ dependencies {
     // https://mvnrepository.com/artifact/org.apache.activemq/activemq-core
     compile("org.apache.activemq:activemq-core:$activeMQVersion")
 
-    // https://mvnrepository.com/artifact/com.squareup.moshi/moshi
-    compile("com.squareup.moshi:moshi:$moshiVersion")
-
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
     compile("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
     compile("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+    compile("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 }
