@@ -6,5 +6,5 @@ kotlinProject()
 
 dependencies {
     implementation(project(":pleo-antaeus-data"))
-    implementation(project(":pleo-antaeus-models"))
+    api(project(":pleo-antaeus-models"))
 }
