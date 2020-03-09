@@ -19,6 +19,8 @@ Please let us know how long the challenge takes you. We're not looking for how s
 Requirements:
 - \>= Java 11 environment
 
+Open the project using your favorite text editor. If you are using IntelliJ, you can open the `build.gradle.kts` file and it is gonna setup the project in the IDE for you.
+
 ### Building
 
 ```
@@ -28,15 +30,6 @@ Requirements:
 ### Running
 
 There are 2 options for running Anteus. You either need libsqlite3 or docker. Docker is easier but requires some docker knowledge. We do recommend docker though.
-
-
-*Running through docker*
-
-Install docker for your platform
-
-```
-make docker-run
-```
 
 *Running Natively*
 
@@ -48,10 +41,23 @@ If you use homebrew on MacOS `brew install sqlite`.
 ./gradlew run
 ```
 
+*Running through docker*
+
+Install docker for your platform
+
+```
+docker build -t antaeus
+docker run antaeus
+```
 
 ### App Structure
 The code given is structured as follows. Feel free however to modify the structure to fit your needs.
 ```
+├── buildSrc
+|  | gradle build scripts and project wide dependency declarations
+|  └ src/main/kotlin/utils.kt 
+|      Dependencies
+|
 ├── pleo-antaeus-app
 |       main() & initialization
 |
@@ -60,14 +66,15 @@ The code given is structured as follows. Feel free however to modify the structu
 |       Pay attention to the PaymentProvider and BillingService class.
 |
 ├── pleo-antaeus-data
-|       Module interfacing with the database. Contains the database models, mappings and access layer.
+|       Module interfacing with the database. Contains the database 
+|       models, mappings and access layer.
 |
 ├── pleo-antaeus-models
-|       Definition of the "rest api" models used throughout the application.
+|       Definition of the Internal and API models used throughout the
+|       application.
 |
-├── pleo-antaeus-rest
-|        Entry point for REST API. This is where the routes are defined.
-└──
+└── pleo-antaeus-rest
+        Entry point for HTTP REST API. This is where the routes are defined.
 ```
 
 ### Main Libraries and dependencies

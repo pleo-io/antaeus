@@ -3,7 +3,7 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.kotlin
 
-const val junitVersion = "5.3.2"
+const val junitVersion = "5.6.0"
 
 /**
  * Configures the current project as a Kotlin project by adding the Kotlin `stdlib` as a dependency.
@@ -11,14 +11,14 @@ const val junitVersion = "5.3.2"
 fun Project.kotlinProject() {
     dependencies {
         // Kotlin libs
-        "implementation"(kotlin("stdlib-jdk8"))
+        "implementation"(kotlin("stdlib"))
 
         // Logging
-        "implementation"("org.slf4j:slf4j-simple:1.7.25")
-        "implementation"("io.github.microutils:kotlin-logging:1.6.22")
+        "implementation"("org.slf4j:slf4j-simple:1.7.30")
+        "implementation"("io.github.microutils:kotlin-logging:1.7.8")
 
         // Mockk
-        "testImplementation"("io.mockk:mockk:1.9")
+        "testImplementation"("io.mockk:mockk:1.9.3")
 
         // JUnit 5
         "testImplementation"("org.junit.jupiter:junit-jupiter-api:$junitVersion")
@@ -32,7 +32,7 @@ fun Project.kotlinProject() {
  */
 fun Project.dataLibs() {
     dependencies {
-        "implementation"("org.jetbrains.exposed:exposed:0.12.1")
-        "implementation"("org.xerial:sqlite-jdbc:3.25.2")
+        "implementation"("org.jetbrains.exposed:exposed:0.17.7")
+        "implementation"("org.xerial:sqlite-jdbc:3.30.1")
     }
 }

@@ -1,6 +1,6 @@
 /*
     Implements the data access layer (DAL).
-    This file implements the database queries used to fetch and insert rows in our database tables.
+    The data access layer is responsible to execute the database queries for the application to properly work.
 
     See the `mappings` module for the conversions between database rows and Kotlin objects.
  */
@@ -50,7 +50,7 @@ class AntaeusDal(private val db: Database) {
                 } get InvoiceTable.id
         }
 
-        return fetchInvoice(id!!)
+        return fetchInvoice(id)
     }
 
     fun fetchCustomer(id: Int): Customer? {
@@ -78,6 +78,6 @@ class AntaeusDal(private val db: Database) {
             } get CustomerTable.id
         }
 
-        return fetchCustomer(id!!)
+        return fetchCustomer(id)
     }
 }
