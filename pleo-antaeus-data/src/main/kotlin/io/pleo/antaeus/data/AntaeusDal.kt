@@ -1,6 +1,6 @@
 /*
     Implements the data access layer (DAL).
-    The data access layer is responsible to execute the database queries for the application to properly work.
+    The data access layer generates and executes requests to the database.
 
     See the `mappings` module for the conversions between database rows and Kotlin objects.
  */
