@@ -1,8 +1,9 @@
-## Antaeus
+## Step by step
 
-Antaeus (/ænˈtiːəs/), in Greek mythology, a giant of Libya, the son of the sea god Poseidon and the Earth goddess Gaia. He compelled all strangers who were passing through the country to wrestle with him. Whenever Antaeus touched the Earth (his mother), his strength was renewed, so that even if thrown to the ground, he was invincible. Heracles, in combat with him, discovered the source of his strength and, lifting him up from Earth, crushed him to death.
-
-Welcome to our challenge.
+Read the instructions and fully understand the needs (readme, navigate in the code, look at the data). Overall, I want to make sure I know exactly what has to be done. 
+From my perspective, the biggest mistake would be to spending time and energy coding something which isn't relevant the task.
+So far, I'm not 100% sure what has to be done but from what I understand I would do a cron job or a scheduled task.
+I've not done much kotlin in my life but if I remember correctly I've assisted to a presentation about kotlin coroutine years ago and it would work out perfectly for what I intend to do.
 
 ## The challenge
 
