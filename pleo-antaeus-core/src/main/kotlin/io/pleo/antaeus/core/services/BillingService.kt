@@ -10,24 +10,47 @@ import io.pleo.antaeus.models.Money
 import io.pleo.antaeus.models.CustomerDebt
 import java.time.LocalDateTime
 import java.util.*
+import kotlin.random.Random
 
 
 class BillingService(private val paymentProvider: PaymentProvider, private val dal: AntaeusDal) {
 
     // Example to help me remember syntax
-    //fun test(name: String, age: Int): String {
-    //    return "Happy ${age}th birthday, $name!"
-    //}
+    fun test(name: String): String {
+        return "Happy birthday, $name!"
+    }
 
-    fun payPendingInvoices(): String {
+    // testing purpose, making sure the API is still available for requests
+    fun wtf() : Int {
+        return Random.nextInt(0, 100)
+    }
+
+    // Return the number of milliseconds between now and the next first of the month
+    fun getMillisBetweenNextFirstOfTheMonth() : Long {
+        val c = Calendar.getInstance()
+        when {
+            // AT 0:01 on the first of the month
+            c.get(Calendar.DAY_OF_MONTH) != 1 && c.get(Calendar.HOUR) != 0 && c.get(Calendar.SECOND) != 1 -> {
+                val currentTime = c.timeInMillis
+                c.set(Calendar.DAY_OF_MONTH, 1)
+                c.add(Calendar.MONTH, 1)
+                val futureTime = c.timeInMillis
+                return futureTime - currentTime
+            }
+        }
+        return 0
+    }
+
+    fun payPendingInvoices(): List<Invoice>{
         // In a real life scenario, you need to have a timestamp in the db proving when exactly invoices were paid off.
-        // A proof is required in most case and in a case like this one it's crucial.
+        // A proof is required in most case and in a case like this one it's crucial, so I'd store it in the DB
+        // Also there would be a check to confirm the payment has been made and has been approved
         val pendingInvoices = dal.fetchInvoicesPending()
 
         for (invoice in pendingInvoices) {
             dal.payInvoice(invoice.id)
         }
-        return "All invoices were paid"
+        return pendingInvoices
     }
 
     fun fetchInvoicesPerCustomer() : List<CustomerDebt>  {

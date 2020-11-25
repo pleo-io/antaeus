@@ -45,8 +45,7 @@ class AntaeusRest(
         // Set up URL endpoints for the rest app
         app.routes {
             get("/") {
-                //it.result("Welcome to Antaeus! see AntaeusRest class for routes")
-                it.json(billingService.payPendingInvoices())
+                it.result("Welcome to Antaeus! see AntaeusRest class for routes")
             }
             path("rest") {
                 // Route to check whether the app is running
@@ -71,6 +70,11 @@ class AntaeusRest(
                         //URL: /rest/v1/invoices/pending
                         get("pending") {
                             it.json(billingService.fetchInvoicesPerCustomer())
+                        }
+
+                        //URL: /rest/v1/invoices/pending
+                        get("wtf") {
+                            it.json(billingService.wtf())
                         }
                     }
 

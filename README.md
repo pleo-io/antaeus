@@ -1,9 +1,8 @@
 ## How I came to a solution
 
-Read the instructions and fully understand the needs (readme, navigate in the code, take a look at the data). 
+Read the instructions and fully understand the needs (readme, navigate in the code, take a look at the data).
 So far, I'm not 100% sure what has to be done but from what I understand I would do a cron job or a scheduled task.
 
-Once I was done reading I had a pretty good idea of what kind of solution I was going to propose and do ... a task/job that would be triggered using something like a cron expression. 
 Then I had 3 potential solution that came up on in my mind.
 
 The first one is writing a code in a kotlin file and run it periodically using k8s's CronJob.
@@ -15,6 +14,7 @@ Those commands would be usefull to compile and run my code in the case I'm choos
 ```
 $ kotlinc chargeSubsAmount.kt -d chargeSubsAmount.jar
 ```
+
 ```
 $ kotlin -classpath chargeSubsAmount.jar HelloKt
 ```
@@ -23,9 +23,19 @@ The second one is also based off running a task periodically but instead of usin
 If I remember correctly one of my colleague during an internship did a presentation about Kotlin coroutine 2 years ago.
 It was quite new back then but as I remember it had a great potential for executing tasks/jobs periodically
 
-The last solution I had in mind was about using AWS Lambda or Scheduled tasks but this requires some fancier shinanigens. 
+The last solution I had in mind was about using AWS Lambda or Scheduled tasks but this requires some fancier shinanigens.
 Either I have to host it on AWS or if I want to keep it locally, I have to setup something like NGINX for AWS to be able to send computed data back.
 I'm not that experienced with AWS and it evolves so quickly that I don't know every feature available.
+
+### The perfect solution
+
+I'm graduating in december and my exams are quite soon, so I'll have to do one last sprint before being done. This means that I don't have infinite amount of time but here are a few of the point I would have spend more time on if I had more time.
+
+In software developpement, quality is really important and in a case where you are dealing directly with people's money even more. That's why I'd spent more time making unit test for the actual features. I have added only 2 which one doesnt work because it would require to add async/await on the calls using expose to retrive data from the database. I would also have spent more time figuring out a way to use cron expression to trigger the payment of those invoices
+
+### Overall thoughts
+
+The challenge was nice and the fact you have to put your thoughts in the readme makes it even more interesting. I've learned some new skills I'll try to practice those even more doing a side project (Kotlin, Docker, etc..). I had experience with other coding language but not with Kotlin. The fact it inclues system design is great, I've always loved those kind of interview. The challenge simulate a real case and from an internship I've made in the past I know I want to work for a fintec. I wish I could have more time to complete everything I wanted to do but I also have to think about my final exams. Coding in Kotlin was soo much nicer than what I remembered ... I wish I would have relized it prior to now.
 
 ## The challenge
 
