@@ -2,6 +2,8 @@
 
 Read the instructions and fully understand the needs (readme, navigate in the code, take a look at the data).
 So far, I'm not 100% sure what has to be done but from what I understand I would do a cron job or a scheduled task.
+In a real life scenario, I would have asked more questions to make sure I know what I have to do.
+Nobody wants to spend time working on something which isn't releveant even more if it costs $$
 
 Then I had 3 potential solution that came up on in my mind.
 
@@ -26,6 +28,8 @@ It was quite new back then but as I remember it had a great potential for execut
 The last solution I had in mind was about using AWS Lambda or Scheduled tasks but this requires some fancier shinanigens.
 Either I have to host it on AWS or if I want to keep it locally, I have to setup something like NGINX for AWS to be able to send computed data back.
 I'm not that experienced with AWS and it evolves so quickly that I don't know every feature available.
+
+At first, I thought that it would be simpler if I start coding the function to get the pending invoices with all the currencies from a customer. Then, I did a function to "pay" those invoices (change the status to PAID). Once those functions were done, I had read on coroutine and figure out a way to make it work with the code I've already made. I thought I would be able to use cron expression but looks like not, so I found some kind of way to achieve what I wanted to do. I've looked at existing librairies but those were not enought popular for me(less than 5 stars on Github).So, I've decided to go with Coroutine because from what I've read it looks quite simple. After I was done with all those steps, I've started doing some unit test on the basic stuff.
 
 ### The perfect solution
 
