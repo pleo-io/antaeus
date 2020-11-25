@@ -15,16 +15,6 @@ import kotlin.random.Random
 
 class BillingService(private val paymentProvider: PaymentProvider, private val dal: AntaeusDal) {
 
-    // Example to help me remember syntax
-    fun test(name: String): String {
-        return "Happy birthday, $name!"
-    }
-
-    // testing purpose, making sure the API is still available for requests
-    fun wtf() : Int {
-        return Random.nextInt(0, 100)
-    }
-
     // Return the number of milliseconds between now and the next first of the month
     fun getMillisBetweenNextFirstOfTheMonth() : Long {
         val c = Calendar.getInstance()
@@ -43,7 +33,7 @@ class BillingService(private val paymentProvider: PaymentProvider, private val d
 
     fun payPendingInvoices(): List<Invoice>{
         // In a real life scenario, you need to have a timestamp in the db proving when exactly invoices were paid off.
-        // A proof is required in most case and in a case like this one it's crucial, so I'd store it in the DB
+        // A proof is required in most case and in one like this it's crucial, so I'd store it in the DB
         // Also there would be a check to confirm the payment has been made and has been approved
         val pendingInvoices = dal.fetchInvoicesPending()
 

@@ -30,7 +30,6 @@ import java.sql.Connection
 import java.time.LocalDateTime
 import java.util.*
 
-
 fun main() {
     // The tables to create in the database.
     val tables = arrayOf(InvoiceTable, CustomerTable)
@@ -89,6 +88,4 @@ fun main() {
             customerService = customerService,
             billingService = billingService
     ).run()
-
-
 }

@@ -67,14 +67,10 @@ class AntaeusRest(
                             it.json(invoiceService.fetch(it.pathParam("id").toInt()))
                         }
 
+                        // I'm pretty sure the route isn't right according to the rest naming convention
                         //URL: /rest/v1/invoices/pending
                         get("pending") {
                             it.json(billingService.fetchInvoicesPerCustomer())
-                        }
-
-                        //URL: /rest/v1/invoices/pending
-                        get("wtf") {
-                            it.json(billingService.wtf())
                         }
                     }
 
