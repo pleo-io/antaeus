@@ -86,3 +86,46 @@ The code given is structured as follows. Feel free however to modify the structu
 * [Sqlite3](https://sqlite.org/index.html) - Database storage engine
 
 Happy hacking 😁!
+
+
+### Initial thoughts
+* Scoping the problem
+
+Initial considerations and assumptions
+- potentially millions of customers going forward
+- one invoice must be sent exactly once
+- one customer could have many invoices
+- another component in the system keeps track of the due amount and/or type of subscription 
+- in case of delay: additional administration fee, interest, etc. as well as stopping the subscription if invoice has not been paid after 2 reminders
+
+- no memory limitation to begin with
+- system restart should not affect the schedulling outcome
+- DB read-write heavy
+- calling external service (payment service)
+
+
+* Major components
+
+Features:
+- send a mail with an invoice / call payment service on the 1. each of month
+- have a due date
+- follow up on it: send reminders, adjust amount (interest, adm. fee)
+- adequate error handling depending on the error type - retry, request manual processing
+
+
+Scalability
+- asynchronous processing 
+- DB should usually be based on replication scheme to avoid being single point of failure; sharding
+- non-relational DB is better at scaling due to lack of joins; in case of relational DB, add redundant info in a table to speed up the info retrieval
+- horisontal scaling on the Application servers
+
+- schedule the invoices in advance in a background process (pre-processing)
+- mark each with a status "processing" -> "scheduled"
+- possibly use an intermediate layer like MQ
+- send them on the 1. of the month
+
+* Key issues
+- subscription cancellation - those should not be sent even if scheduled already
+- subscription change - those should be reschedulled (if scheduled already)
+- risk for breaking the mail server - throughput must be lower than the bandwidth of the mail server at the time of sending all mails on 1. month; maybe horisontal scaling together with load-balancing across the app servers
+- depending on the time zone, customers might get their invoice(s) the day before/after
