@@ -15,6 +15,13 @@ object InvoiceTable : Table() {
     val status = text("status")
 }
 
+object InvoiceLogTable: Table() {
+    val id = integer("id").autoIncrement().primaryKey()
+    val invoiceId = integer("invoiceId").primaryKey()
+    val timestamp = long("timestamp")
+    val message = text("message")
+}
+
 object CustomerTable : Table() {
     val id = integer("id").autoIncrement().primaryKey()
     val currency = varchar("currency", 3)

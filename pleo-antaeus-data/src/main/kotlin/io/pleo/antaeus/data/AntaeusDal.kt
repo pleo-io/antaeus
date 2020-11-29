@@ -10,13 +10,13 @@ package io.pleo.antaeus.data
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice
+import io.pleo.antaeus.models.InvoiceLog
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
+import io.pleo.antaeus.models.Message
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.time.*
 
 class AntaeusDal(private val db: Database) {
     fun fetchInvoice(id: Int): Invoice? {
@@ -38,6 +38,14 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
+    fun fetchInvoicesByStatus(status: InvoiceStatus): List<Invoice> {
+        return transaction(db) {
+            InvoiceTable
+                .select {InvoiceTable.status.eq(status.toString())}
+                .map { it.toInvoice() }
+        }
+    }
+
     fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING): Invoice? {
         val id = transaction(db) {
             // Insert the invoice and returns its new id.
@@ -51,6 +59,35 @@ class AntaeusDal(private val db: Database) {
         }
 
         return fetchInvoice(id)
+    }
+
+    fun updateInvoiceStatus(id: Int, status: InvoiceStatus): Int {
+        return transaction(db){
+            InvoiceTable
+                .update( {InvoiceTable.id.eq(id)} ) {
+                    it[this.status] = status.toString()
+                }
+        }
+    }
+
+    fun createInvoiceLog(invoiceId: Int, message: Message): Int? {
+        return transaction(db) {
+            // Insert the invoice log and returns its new id.
+            InvoiceLogTable
+                .insert {
+                    it[this.invoiceId] = invoiceId
+                    it[timestamp] = Instant.now().toEpochMilli()
+                    it[this.message] = message.toString()
+                } get InvoiceLogTable.id
+        }
+    }
+
+    fun fetchInvoiceLogs(from: Long, to: Long): List<InvoiceLog> {
+        return transaction(db) {
+            InvoiceLogTable
+                    .select {InvoiceLogTable.timestamp.between(from, to)}
+                    .map {it.toInvoiceLog()}
+        }
     }
 
     fun fetchCustomer(id: Int): Customer? {
