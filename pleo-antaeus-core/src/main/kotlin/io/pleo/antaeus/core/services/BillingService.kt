@@ -5,10 +5,10 @@ import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.core.exceptions.*
 import io.pleo.antaeus.models.Message
-import io.pleo.antaeus.models.Schedule
 import mu.KotlinLogging
 import java.time.Instant
 import kotlinx.coroutines.*
+import io.pleo.antaeus.core.services.config.ServiceConfiguration
 
 class BillingService(
     private val paymentProvider: PaymentProvider,
@@ -21,7 +21,7 @@ class BillingService(
     fun start() {
 
         GlobalScope.launch {
-            delay(scheduleService.timeUntilNextBilling(Schedule.MONTHLY))
+            delay(scheduleService.timeUntilNextBilling(ServiceConfiguration.billingScheme))
 
             val pendingInvoices = invoiceService.fetchByStatus(InvoiceStatus.PENDING)
             executeBilling(pendingInvoices)
@@ -38,7 +38,7 @@ class BillingService(
 
         handleProblematicInvoices()
 
-        delay(scheduleService.timeUntilNextBilling(Schedule.MONTHLY))
+        delay(scheduleService.timeUntilNextBilling(ServiceConfiguration.billingScheme))
         executeBilling(invoiceService.fetchByStatus(InvoiceStatus.PENDING))
     }
 
@@ -68,14 +68,12 @@ class BillingService(
     }
 
     private fun handleProblematicInvoices() {
+        //TODO separate trouble shooting service that periodically checks for new logs
         val now = Instant.now().toEpochMilli()
-        //logs for the last 24h - property ideally kept in a config file
-        if(invoiceService.fetchInvoiceLogs(now - 24*60*60*60*1000L, now).isNotEmpty())
+        if(invoiceService.fetchInvoiceLogs(now - ServiceConfiguration.invoiceTroubleShootingHeartbeatMs, now).isNotEmpty())
             log.debug("There are invoices that need further handling")
         // TODO send a message with the amount of logs
         else
             log.debug { "All invoices have been charged successfully" }
-
-        // TODO automate the handling process
     }
 }

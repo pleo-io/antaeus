@@ -3,6 +3,7 @@ package io.pleo.antaeus.core.services
 import io.mockk.*
 import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
 import io.pleo.antaeus.core.external.PaymentProvider
+import io.pleo.antaeus.core.services.config.ServiceConfiguration
 import io.pleo.antaeus.models.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -19,7 +20,7 @@ class BillingServiceTest {
 
     @BeforeEach
     fun setup() {
-        every { scheduleService.timeUntilNextBilling(Schedule.MONTHLY) } returns 0
+        every { scheduleService.timeUntilNextBilling(ServiceConfiguration.billingScheme) } returns 0
     }
 
     @Test
