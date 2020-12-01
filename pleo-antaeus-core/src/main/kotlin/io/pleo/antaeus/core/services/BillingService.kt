@@ -33,15 +33,16 @@ class BillingService(
     private fun charge(invoice: Invoice) {
 
         try {
-            if (paymentProvider.charge(invoice))
-                if(invoiceService.updateStatus(invoice.id, InvoiceStatus.PAID) == 0) {
+            if (paymentProvider.charge(invoice)) {
+                if (invoiceService.updateStatus(invoice.id, InvoiceStatus.PAID) == 0) {
                     log.debug("Invoice was paid but status was not updated")
                     invoiceService.addInvoiceLog(invoice.id, Message.INVOICE_PAID)
                 }
+            }
             else {
-                    log.debug("Insufficient funds")
-                    invoiceService.addInvoiceLog(invoice.id, Message.INSUFFICIENT_FUNDS)
-                }
+                log.debug("Insufficient funds")
+                invoiceService.addInvoiceLog(invoice.id, Message.INSUFFICIENT_FUNDS)
+            }
         } catch (e: CustomerNotFoundException) {
             invoiceService.addInvoiceLog(invoice.id, Message.CUSTOMER_NOT_FOUND)
         } catch (e: CurrencyMismatchException) {
@@ -56,10 +57,13 @@ class BillingService(
 
     private fun handleProblematicInvoices() {
         val now = Instant.now().toEpochMilli()
-        //logs for the last 24h
+        //logs for the last 24h - property ideally kept in a config file
         if(invoiceService.fetchInvoiceLogs(now - 24*60*60*60*1000L, now).isNotEmpty())
             log.debug("There are invoices that need further handling")
-        // TODO see how many new logs there are and send a message with the amount (if any)
+        // TODO send a message with the amount of logs
+        else
+            log.debug { "All invoices have been charged successfully" }
+
         // TODO automate the handling process
     }
 }

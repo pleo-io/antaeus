@@ -17,7 +17,7 @@ object InvoiceTable : Table() {
 
 object InvoiceLogTable: Table() {
     val id = integer("id").autoIncrement().primaryKey()
-    val invoiceId = integer("invoiceId").primaryKey()
+    val invoiceId = reference("invoiceId", InvoiceTable.id)
     val timestamp = long("timestamp")
     val message = text("message")
 }

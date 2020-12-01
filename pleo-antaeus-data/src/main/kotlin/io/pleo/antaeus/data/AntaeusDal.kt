@@ -85,8 +85,8 @@ class AntaeusDal(private val db: Database) {
     fun fetchInvoiceLogs(from: Long, to: Long): List<InvoiceLog> {
         return transaction(db) {
             InvoiceLogTable
-                    .select {InvoiceLogTable.timestamp.between(from, to)}
-                    .map {it.toInvoiceLog()}
+                .select { InvoiceLogTable.timestamp.between(from, to) }
+                .map { it.toInvoiceLog() }
         }
     }
 

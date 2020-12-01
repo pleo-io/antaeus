@@ -28,8 +28,8 @@ class InvoiceService(private val dal: AntaeusDal) {
         return dal.updateInvoiceStatus(id, status)
     }
 
-    fun addInvoiceLog (id: Int, message: Message): Int? {
-        return dal.createInvoiceLog(id, message)
+    fun addInvoiceLog (id: Int, message: Message): Int {
+        return dal.createInvoiceLog(id, message) ?: 0
     }
 
     fun fetchInvoiceLogs(from: Long, to: Long): List<InvoiceLog> {
