@@ -5,29 +5,41 @@ import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.core.exceptions.*
 import io.pleo.antaeus.models.Message
+import io.pleo.antaeus.models.Schedule
 import mu.KotlinLogging
 import java.time.Instant
+import kotlinx.coroutines.*
 
 class BillingService(
     private val paymentProvider: PaymentProvider,
-    private val invoiceService: InvoiceService
+    private val invoiceService: InvoiceService,
+    private val scheduleService: ScheduleService
 ) {
-// TODO - turn into asynchronous behaviour
+
     private val log = KotlinLogging.logger("BillingService")
 
     fun start() {
-        //TODO schedule the execution for monthlyBilling
-        val pendingInvoices = invoiceService.fetchByStatus(InvoiceStatus.PENDING)
-        executeBilling(pendingInvoices)
+
+        GlobalScope.launch {
+            delay(scheduleService.timeUntilNextBilling(Schedule.MONTHLY))
+
+            val pendingInvoices = invoiceService.fetchByStatus(InvoiceStatus.PENDING)
+            executeBilling(pendingInvoices)
+        }
     }
 
-    private fun executeBilling (invoices: List<Invoice>) {
+    private suspend fun executeBilling (invoices: List<Invoice>) {
 
         for (invoice in invoices) {
-            charge(invoice)
+            GlobalScope.launch {
+                charge(invoice)
+            }
         }
 
         handleProblematicInvoices()
+
+        delay(scheduleService.timeUntilNextBilling(Schedule.MONTHLY))
+        executeBilling(invoiceService.fetchByStatus(InvoiceStatus.PENDING))
     }
 
     private fun charge(invoice: Invoice) {
@@ -50,7 +62,7 @@ class BillingService(
         } catch (e: NetworkException) {
             log.debug("Network error")
             invoiceService.addInvoiceLog(invoice.id, Message.NETWORK_ERROR)
-            //TODO try again in, say, 1 min; retry 3 times before logging it
+            //TODO retry mechanism before logging
         }
 
     }

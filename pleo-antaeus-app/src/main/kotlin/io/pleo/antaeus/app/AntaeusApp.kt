@@ -11,6 +11,7 @@ import getPaymentProvider
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.core.services.ScheduleService
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceLogTable
@@ -60,11 +61,13 @@ fun main() {
     // Create core services
     val invoiceService = InvoiceService(dal = dal)
     val customerService = CustomerService(dal = dal)
+    val scheduleService = ScheduleService()
 
     // This is _your_ billing service to be included where you see fit
     BillingService(
             paymentProvider = paymentProvider,
-            invoiceService = invoiceService
+            invoiceService = invoiceService,
+            scheduleService = scheduleService
     ).start()
 
     // Create REST web service
