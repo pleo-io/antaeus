@@ -86,3 +86,13 @@ The code given is structured as follows. Feel free however to modify the structu
 * [Sqlite3](https://sqlite.org/index.html) - Database storage engine
 
 Happy hacking 😁!
+
+## My thought process
+I should start by saying that I have no experience in Java or Kotlin. My first experience with Kotlin (or Java in general) is this challenge and I am glad that I could explore a new language. I come from a Python background (and Golang too). 
+Although Evan set me the challenge a week ago, I could not work on it till Sunday because I had to undergo a toe surgery. I am sorry for the delay in submission.
+
+Coming to the challenge, the first thought that hit my brain was to add another endpoint for billing and use an external cronjob to hit on the first of every month thereby having the freedom to even manually do billing whenever needed. So, I added a REST endpoint "/rest/v1/billing/charge" which, on a GET request, go through the database of invoices, filter those that are pending, send through mock payment gateway and charge them. When a successful payment occurs for a bill, I change the status of the invoice to PAID from PENDING in DB. Also, I have added a table for Bills in the DB to keep a track of bill details like success of payment, reason for failure if the payment fails, etc. I have also added two more endpoints (like the customer and invoice ones) to fetch all bills and a specific bill ("/rest/v1/billing/bills{:id}").
+After building the rest endpoints, I have moved on to the actual challenge (or at least from what I understand) which is billing periodically as a process internal to the app unlike a GET request using a cron job on the endpoint. To be honest, this was a tricky part for me and ate a lot of my time. I have Googled a lot trying to find the best solution for internal periodic tasks. I have narrowed down to two options: using quartz-scheduler library or using kotlin-coroutines. I have asked around on Slack/Discord to know which is the better tool and I learnt that quartz-scheduler will be a better tool if scaling is important and kotlin-coroutines are better for smaller jobs. So, I went ahead with kotlin-coroutines and built an internal scheduler removing the need for an external cronjob (although I have still left the endpoints on).
+
+It took me around 8-9 hours to come up with this solution/submission and 1 hour preparation on Kotlin syntax basics (from this: [Kotlin for Python developers](https://github.com/Khan/kotlin-for-python-developers)). I wish I could spend more time on the challenge but because of my surgery, all my work got stalled. So, I just had this Sunday to work on this challenge and submit it before resuming my other work. It was a fun challenge and I developed a liking towards Kotlin/Java :) .
+
