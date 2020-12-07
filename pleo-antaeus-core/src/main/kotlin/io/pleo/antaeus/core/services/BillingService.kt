@@ -31,7 +31,7 @@ class BillingService(
     private suspend fun executeBilling (invoices: List<Invoice>) {
 
         for (invoice in invoices) {
-            GlobalScope.launch {
+            coroutineScope {
                 charge(invoice)
             }
         }
@@ -67,7 +67,7 @@ class BillingService(
 
     }
 
-    private fun handleProblematicInvoices() {
+    fun handleProblematicInvoices() {
         //TODO separate trouble shooting service that periodically checks for new logs
         val now = Instant.now().toEpochMilli()
         if(invoiceService.fetchInvoiceLogs(now - ServiceConfiguration.invoiceTroubleShootingHeartbeatMs, now).isNotEmpty())
