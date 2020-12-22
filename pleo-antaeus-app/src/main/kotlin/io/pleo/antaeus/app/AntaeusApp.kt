@@ -14,6 +14,7 @@ import io.pleo.antaeus.core.services.InvoiceService
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
+import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.rest.AntaeusRest
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -24,6 +25,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import setupInitialData
 import java.io.File
 import java.sql.Connection
+import java.util.Date
 
 fun main() {
     // The tables to create in the database.
@@ -67,6 +69,9 @@ fun main() {
     AntaeusRest(
         invoiceService = invoiceService,
         customerService = customerService,
-        billingService = billingService
+        billingService = billingService // added here just for testing purposes with a REST call
     ).run()
+
+    // The function passed in here will be executed on the first day of the month after the passed date.
+    monthlyScheduleFunction(Date()) { billingService.chargeInvoices(InvoiceStatus.PENDING) }
 }
