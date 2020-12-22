@@ -86,3 +86,17 @@ The code given is structured as follows. Feel free however to modify the structu
 * [Sqlite3](https://sqlite.org/index.html) - Database storage engine
 
 Happy hacking 😁!
+
+###My Notes
+
+####About the language
+I have never worked with Kotlin before, so I had to spend some time to get into it. In general, I liked the language, it looks like the son of Java with Typescript.
+
+####About the task
+It took me about 10 hours, and I have divided it into 3 parts:
+ 
+ 1. I focussed on the payment feature, for this I have created a new endpoint ```/rest/v1/billing/pending``` to test more quickly if the invoices had been billed correctly. I also added a new Invoice Status, so it is marked as error in case of any invoice payment fails, this way it can be handled later as an isolated case. I also extended the invoiceDAL to fetch certain kind of invoices and to modify its status.  Last but not least, I have added unit tests to the billing service, which are testing mainly the exceptions thrown by the payment provider.
+ 2. I created a rudimentary scheduler which schedules any passed function to the 1st day of the next month and is executed again after 30 days. I particularly found this part a bit complicated since could not find a good way to make it run specifically every 1st of each month. I have hardcoded 30 days as milliseconds, but I'm aware that this can lead to subsequent erroneous dates since the number of days in a month can vary.  I have also considered bringing in a scheduler library like Quartz, but I have never used it too, so  I decided to start my own, which still has a lot to be improved.
+ 3. Writing this README.md
+ 
+ Apart from that, I have included some comments with ```Todo:``` in the code, to places where I think it`s suitable to make improvements in the future.
