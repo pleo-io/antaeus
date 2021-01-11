@@ -86,3 +86,28 @@ The code given is structured as follows. Feel free however to modify the structu
 * [Sqlite3](https://sqlite.org/index.html) - Database storage engine
 
 Happy hacking 😁!
+
+### In completing this challenge, I implemented 3 features:
+1. [FetchInvoiceByStatus](https://github.com/bmwachajr/antaeus/commit/47d729b16c9d69235ddb7ca53a80d942dbd7fc78): As the name suggests, this feature enables us to fetch invoices by their status using the path `/v1/invoices/status/{:status}` - Returns a list of linvoices with the status `{:status}`.
+
+Invoices can have 5 statuses `PENDING`, `FAILED`, `PAID`, `UNPAID`, `CURRENCY_MISMATCH` and `INVALID_CUSTOMER`.
+
+Invoice statues enable us to query the right invoice category, charge invoices and manage them incase of exceptions such as network failures, currency mismatchs and invalid customers.
+
+2. [Billing Service](https://github.com/bmwachajr/antaeus/commit/8be0f4ec4b44b3f1793990f34040889ac4eb1153: This feature enables us to bill the all invoices by `{:status}`.
+
+The Billingservice is schedule to charge `PENDING` invoices on the first of every month, a scheduler starst a job that runs the billing service. This job recurrs and only bills invoices on the first of the month.
+
+As a fail safe, an api endpoint to manually trigger billing has been added `/v1/invoices/status/:status/bill`. This gives the power to bill incoices out of season.
+
+3. [Bill an invoice](https://github.com/bmwachajr/antaeus/commit/47d729b16c9d69235ddb7ca53a80d942dbd7fc78): It's a given that some invoices will fail to be paid because of an exception occurring. 
+
+The billing services graciuosly fails and updates the status of these invoices to either of `FAILED`, `UNPAID`, `CURRENCY_MISMATCH` and `INVALID_CUSTOMER`.
+
+These Invoices can be individually charged using the endpoint `/v1/invoices/{:id}/bill`.
+
+### Testing
+Added a [BillingServiceTest](https://github.com/bmwachajr/antaeus/commit/529578a0fe4d4357fa436f29bbb71b4c0c9404d4)
+
+### Time spent
+I spent appromixately a `week` leveling up on both leveling up on kotlin, experimenting with the apps javelin framework and working on the challenge. Approximately `3 hours a day`.
