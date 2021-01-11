@@ -53,7 +53,7 @@ class BillingServiceTest {
         val results = billingService.billInvoice(invoice.id)
 
         verify(exactly = 1) {
-            dal.updateInvoiceStatus(any(), InvoiceStatus.PAID.toString())
+            dal.updateInvoiceStatus(invoice.id, InvoiceStatus.PAID.toString())
         }
     }
 
@@ -70,7 +70,7 @@ class BillingServiceTest {
         val results = billingService.billInvoice(1)
 
         verify(exactly = 0) {
-            dal.updateInvoiceStatus(any(), InvoiceStatus.PAID.toString())
+            dal.updateInvoiceStatus(1, InvoiceStatus.PAID.toString())
         }
     }
 

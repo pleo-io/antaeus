@@ -34,33 +34,21 @@ class BillingService(
 
     fun billInvoice(id: Int): Invoice {
         val invoice = invoiceService.fetch(id)
-        if (invoice.status != InvoiceStatus.PAID) { processInvoice(invoice) }
+        PaymentScope.launch{
+            if (invoice.status != InvoiceStatus.PAID) {
+                val paymentflow = processPayment(invoice)
+
+                paymentflow.collect {
+                    val result = it
+                    logger.info { result }
+                }
+            }
+        }
 
         return invoice
     }
 
-    private fun processInvoice(invoice: Invoice) {
-        try {
-            when(paymentProvider.charge(invoice)){
-                true -> { invoiceService.updateStatus(invoice.id, InvoiceStatus.PAID.toString()) }
-                false -> { invoiceService.updateStatus(invoice.id, InvoiceStatus.UNPAID.toString()) }
-            }
-        }
-        catch (e: CustomerNotFoundException) {
-            logger.error(e) { CustomerNotFoundException(invoice.customerId) }
-            invoiceService.updateStatus(invoice.id, InvoiceStatus.INVALID_CUSTOMER.toString())
-        }
-        catch (e: CurrencyMismatchException) {
-            logger.error(e) { CurrencyMismatchException(invoice.id, invoice.customerId) }
-            invoiceService.updateStatus(invoice.id, InvoiceStatus.CURRENCY_MISMATCH.toString())
-        }
-        catch (e: NetworkException) {
-            logger.error(e) { NetworkException() }
-            invoiceService.updateStatus(invoice.id, InvoiceStatus.FAILED.toString())
-        }
-    }
-
-    suspend fun processPayment(invoice: Invoice): Flow<Result<Boolean>> {
+    private fun processPayment(invoice: Invoice): Flow<Result<Boolean>> {
         return flow {
             val charge = paymentProvider.charge(invoice)
             when(charge){
