@@ -8,6 +8,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 class InvoiceServiceTest {
+
+    /*
+     * TODO use an in memory test DB including test samples to run the unit tests
+     *  (like the one created when the application starts)
+     */
+
     private val dal = mockk<AntaeusDal> {
         every { fetchInvoice(404) } returns null
     }
@@ -18,6 +24,23 @@ class InvoiceServiceTest {
     fun `will throw if invoice is not found`() {
         assertThrows<InvoiceNotFoundException> {
             invoiceService.fetch(404)
+        }
+    }
+
+    @Test
+    fun `retrieve only pending invoices`() {
+        // TODO
+    }
+
+    @Test
+    fun `setInvoicePaid update the status to PAID`() {
+        // TODO
+    }
+
+    @Test
+    fun `setInvoicePaid throw if invoice not found`() {
+        assertThrows<InvoiceNotFoundException> {
+            invoiceService.setInvoicePaid(404)
         }
     }
 }
