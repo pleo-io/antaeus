@@ -54,7 +54,9 @@ with the corresponding service method (with comment if there is tricky parts) an
 I code in dedicated branch because it's easier for code review after using Merge Request.
 And it avoids conflict when working in the same branch and keeps the repo clean and clear
 
-
+### Final note
+Of course I know that the code I give you is far from complete and perfect and I almost feel ashamed to give you that
+but I wish to have the chance to talk through it with some of you guys. 
 
 
 ## Antaeus
