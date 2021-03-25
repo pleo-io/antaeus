@@ -7,15 +7,8 @@
 
 package io.pleo.antaeus.data
 
-import io.pleo.antaeus.models.Currency
-import io.pleo.antaeus.models.Customer
-import io.pleo.antaeus.models.Invoice
-import io.pleo.antaeus.models.InvoiceStatus
-import io.pleo.antaeus.models.Money
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
+import io.pleo.antaeus.models.*
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class AntaeusDal(private val db: Database) {
@@ -53,6 +46,16 @@ class AntaeusDal(private val db: Database) {
         return fetchInvoice(id)
     }
 
+    fun updateInvoiceStatus(invoiceId: Int,status: InvoiceStatus) {
+        val id = transaction(db) {
+            InvoiceTable.
+                    update({InvoiceTable.id eq invoiceId}) {
+                        it[this.status] = status.toString()
+
+                    }
+        }
+    }
+
     fun fetchCustomer(id: Int): Customer? {
         return transaction(db) {
             CustomerTable
@@ -80,4 +83,37 @@ class AntaeusDal(private val db: Database) {
 
         return fetchCustomer(id)
     }
+
+    fun createBill(invoiceId: Int,status: BillingStatus, failureReason: String): Bill? {
+        val id = transaction(db) {
+            // Insert the customer and return its new id.
+            BillingTable.insert {
+                it[this.invoiceId] = invoiceId
+                it[this.status] = status.toString()
+                it[this.failureReason] = failureReason
+            } get BillingTable.id
+        }
+
+        return fetchBill(id)
+    }
+
+    fun fetchBill(id: Int): Bill? {
+        return transaction(db) {
+            BillingTable
+                    .select { BillingTable.id.eq(id) }
+                    .firstOrNull()
+                    ?.toBill()
+        }
+    }
+
+    fun fetchBills(): List<Bill> {
+        return transaction(db) {
+            BillingTable
+                    .selectAll()
+                    .map { it.toBill() }
+        }
+    }
+
+
+
 }
