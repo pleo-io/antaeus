@@ -2,5 +2,9 @@ package io.pleo.antaeus.models
 
 enum class InvoiceStatus {
     PENDING,
-    PAID
+    FAILED,
+    PAID,
+    UNPAID,
+    CURRENCY_MISMATCH,
+    INVALID_CUSTOMER
 }
