@@ -1,40 +1,19 @@
-## Challenge notes
-I decided to go very simple with the implementation and explain what I would do here.
-I also went for this option since I've never used Kotlin and it was taking me a lot of time to find
-how to do the stuff I wanted to do (I'm used to Java/Maven/SpringBoot/Hibernate).
-So if I work with you guys I will of course invest time to adjust to all your stack.
-Also I couldn't code as much as I wanted the last 2 years because I was Team lead and PO so I'm a bit rusty =)
-Finally I wanted to come back to you this week and time flies and I had/have and will have many interviews...
-I hope I can convince you with a readme and a tiny bit of code! =) 
+### Code refactoring
+I splitted AntheusDal into several *Dal classes along with mappings.kt and tables.kt files.
+IMO (and by experience) a unique class managing several entities tends to become big, messy and prone to code duplication and errors.
+I prefer classes: with a self-explanatory name, simple, short and focus on one concern. It's easier and faster to read and review.
+It also allows to have straight forward coding standards enforced during code reviews. This way devs can still code in there "own way"
+but with the same structure without effort.
+It's also useful: 
+- onboarding new devs: knowing one component structure means knowing all (except the business part of course) 
+- searching with IDE, ex: search for 'customer' gives everything related to Customer* which is very convenient
+- ... among other nice things that don't cross my mind right now =)
 
-(also aiming for more devops stuff)
+Side effect of that is having more classes but IDEs are here to help ,)
 
-### Sheduler/Trigger every 1st of the month
-This project looks very much like a backend REST API so I treated it accordingly and decided to keep it as simple
-and light as possible. With that in mind I decided to not implement a scheduler to trigger the invoice 
-payment on every 1st of the month inside the API but instead only expose an endpoint to pay the pending invoices.
-I guess it means that I fail to complete the challenge straight away ^^" ... 
-
-IMO scheduling and triggering is not the role of a backend REST API (even if it can be done using quartz for example).
-Also it would constantly consume CPU and RAM and for a stateless app running on a cloud infrastructure I would not want it
-especially if the cloud provider charge you based on resource consumption.
-I think that this scheduling and trigger task should be done using an external and easily configurable tool calling
-the endpoint every 1st of the month (maybe a tool centralising all the scheduled tasks of the system instead of 
-having multiple schedulers spread all over the ecosystem).
-The endpoint can also be called on demand by the frontend of a business operator or by the system if a NetworkException
-occurs and the system wants to retry several time to pay an invoice before logging/sending an error message. No need
-for multiple and complex endpoints only one does the trick.
-
-So I didn't implement that part and assume this is done outside of this project.
-
-### DAL
-I would split the DAL into several DAL classes (so here CustomerDal and InvoiceDal) since one dal can become very big and messy
-if it manages many entities. It's clearer to read and review.
-
-### Services
-I would only allow a service to call its corresponding dal (Service_A can only Dal_A not Dal_B) and enforce it 
-in the code reviews. It's clearer to read and review.
-Services can of course call each other.
+#### Example of coding standard
+A Service can only call its corresponding Dal. Ex: Service_A can only Dal_A not Dal_B.
+Instead Services call each other.
 
 ### PaymentProvider
 I was tempted to update the implementation to actually throws the CustomerNotFoundException and CurrencyMismatchException
