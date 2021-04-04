@@ -14,7 +14,6 @@ import io.pleo.antaeus.core.services.InvoiceService
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
-private val thisFile: () -> Unit = {}
 
 class AntaeusRest(
     private val invoiceService: InvoiceService,
