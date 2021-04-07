@@ -16,11 +16,15 @@ class BillingService(
     /*
      * Charges all the pending invoices and return the list of paid invoices
      */
-    fun chargePendingInvoices() {
-        invoiceService.fetchPendingInvoices().forEach{
+    fun chargePendingInvoices(): List<Invoice> {
+
+        val paidInvoices = mutableListOf<Invoice>()
+
+        val pendingInvoices = invoiceService.fetchPendingInvoices()
+        pendingInvoices.forEach{
             try {
                 if (paymentProvider.charge(it)) {
-                    invoiceService.setInvoicePaid(it.id)
+                    paidInvoices.add(invoiceService.setInvoicePaid(it.id))
                     log.info("Invoice ${it.id} successfully paid!")
                 } else {
                     log.warn { "Invoice ${it.id} cannot be paid: customer ${it.customerId} account balance did not allow the charge" }
@@ -37,6 +41,9 @@ class BillingService(
                 // TODO add this invoice in a queue so the billing can be retried later
             }
         }
+
+        log.info("${paidInvoices.size} have been paid on ${pendingInvoices.size}")
+        return paidInvoices.toList()
     }
 
 }
