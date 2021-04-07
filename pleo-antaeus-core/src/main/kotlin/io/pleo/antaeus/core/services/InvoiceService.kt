@@ -14,6 +14,7 @@ class InvoiceService(private val invoiceDal: InvoiceDal) {
         return invoiceDal.fetchInvoices()
     }
 
+    @Throws(InvoiceNotFoundException::class)
     fun fetch(id: Int): Invoice {
         return invoiceDal.fetchInvoice(id) ?: throw InvoiceNotFoundException(id)
     }
@@ -22,8 +23,8 @@ class InvoiceService(private val invoiceDal: InvoiceDal) {
         return invoiceDal.fetchPendingInvoices()
     }
 
-    fun setInvoicePaid(id: Int) {
+    fun setInvoicePaid(id: Int): Invoice? {
         fetch(id) // exception raised if invoice id doesn't exists
-        invoiceDal.updateInvoiceStatus(id, InvoiceStatus.PAID)
+        return invoiceDal.updateInvoiceStatus(id, InvoiceStatus.PAID)
     }
 }
