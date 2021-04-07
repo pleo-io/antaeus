@@ -13,6 +13,7 @@ class CustomerService(private val customerDal: CustomerDal) {
         return customerDal.fetchCustomers()
     }
 
+    @Throws(CustomerNotFoundException::class)
     fun fetch(id: Int): Customer {
         return customerDal.fetchCustomer(id) ?: throw CustomerNotFoundException(id)
     }
