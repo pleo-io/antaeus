@@ -30,12 +30,3 @@ internal fun setupInitialData(customerDal: CustomerDal, invoiceDal: InvoiceDal) 
         }
     }
 }
-
-// This is the mocked instance of the payment provider
-internal fun getPaymentProvider(): PaymentProvider {
-    return object : PaymentProvider {
-        override fun charge(invoice: Invoice): Boolean {
-                return Random.nextBoolean()
-        }
-    }
-}
