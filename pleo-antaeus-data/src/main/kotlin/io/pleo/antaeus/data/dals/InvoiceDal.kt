@@ -59,7 +59,7 @@ class InvoiceDal(private val db: Database) {
         return fetchInvoice(id)
     }
 
-    fun updateInvoiceStatus(id: Int, status: InvoiceStatus) {
+    fun updateInvoiceStatus(id: Int, status: InvoiceStatus): Invoice? {
         transaction(db) {
             InvoiceTable.update(
                 where = { InvoiceTable.id.eq(id) }
@@ -67,5 +67,6 @@ class InvoiceDal(private val db: Database) {
                 it[InvoiceTable.status] = status.toString()
             }
         }
+        return fetchInvoice(id)
     }
 }
