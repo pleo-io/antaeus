@@ -23,8 +23,8 @@ class InvoiceService(private val invoiceDal: InvoiceDal) {
         return invoiceDal.fetchPendingInvoices()
     }
 
-    fun setInvoicePaid(id: Int): Invoice? {
+    fun setInvoicePaid(id: Int): Invoice {
         fetch(id) // exception raised if invoice id doesn't exists
-        return invoiceDal.updateInvoiceStatus(id, InvoiceStatus.PAID)
+        return invoiceDal.updateInvoiceStatus(id, InvoiceStatus.PAID)!! // Cannot be null here
     }
 }

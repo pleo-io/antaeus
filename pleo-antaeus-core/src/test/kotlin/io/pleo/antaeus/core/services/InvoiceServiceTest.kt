@@ -49,7 +49,7 @@ class InvoiceServiceTest {
     @Test
     fun `setInvoicePaid update status to PAID`() {
         val i = invoiceService.setInvoicePaid(1)
-        assertEquals(InvoiceStatus.PAID, i?.status)
+        assertEquals(InvoiceStatus.PAID, i.status)
     }
 
     @Test
