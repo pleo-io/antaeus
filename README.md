@@ -1,3 +1,5 @@
+## Challenge note
+
 ### Code refactoring
 I splitted AntheusDal into several *Dal classes along with mappings.kt and tables.kt files.
 IMO (and by experience) a unique class managing several entities tends to become big, messy and prone to code duplication and errors.
@@ -16,27 +18,34 @@ A Service can only call its corresponding Dal. Ex: Service_A can only Dal_A not 
 Instead Services call each other.
 
 ### PaymentProvider
-I was tempted to update the implementation to actually throws the CustomerNotFoundException and CurrencyMismatchException
-and randomly throws a NetworkException but I decided not to because it was not the point of the challenge I choose to assume
-it is (even though the code itself isn't).
+PaymentProviderImpl implements the interface PaymentProvider
 
-### Unit test
-I'm used to create at least one success and one error test for each service method. Here I added the signatures but didn't
-implemented them. I would have created an in memory database like the one created when the app starts but constant test
-samples and use it in the unit tests (and clean/recreate it between tests when necessary)
+## Billing
 
-### Commit
-I make sure that each commit is small and consistent. For example: a dal method,
-with the corresponding service method (with comment if there is tricky parts) and the corresponding unit test.
+### On demand
+One can ask the billing of all pending invoices at any time using:
 
-### Branch
-I code in dedicated branch because it's easier for code review after using Merge Request.
-And it avoids conflict when working in the same branch and keeps the repo clean and clear
+POST http://localhost:7000/rest/v1/billings/now
 
-### Final note
-Of course I know that the code I give you is far from complete and perfect and I almost feel ashamed to give you that
-but I wish to have the chance to talk through it with some of you guys. 
+### Automatic on 1st of each month 
+Automatic billing on 1st of each month can be scheduled using:
 
+POST http://localhost:7000/rest/v1/billings/monthly
+
+### Automatic with custom rule
+One can configure its own automatic billing rule using:
+
+POST http://localhost:7000/rest/v1/billings/scheduled?cronExp={cronExp}
+
+## Notes
+
+### Scheduler
+Since this app looks very much like a backend rest api too me,
+I still think that implementing a scheduler inside is a bad idea.
+I would rather externalise the scheduling part to keep only the "on demand" call since
+I don't like the idea of potentially having multiple schedulers spread all over the ecosystem.
+If it is not a backend api designed to be containerised and run inside a K8s cluster then it's fine =)
+Here I chose Quartz but from what I found on internet coroutine could have done the trick too.
 
 ## Antaeus
 
@@ -124,5 +133,6 @@ The code given is structured as follows. Feel free however to modify the structu
 * [JUnit 5](https://junit.org/junit5/) - Testing framework
 * [Mockk](https://mockk.io/) - Mocking library
 * [Sqlite3](https://sqlite.org/index.html) - Database storage engine
+* [Quartz](http://www.quartz-scheduler.org/) - Quartz scheduler
 
 Happy hacking 😁!
