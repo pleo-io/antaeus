@@ -5,9 +5,10 @@
 package io.pleo.antaeus.rest
 
 import io.javalin.Javalin
-import io.javalin.apibuilder.ApiBuilder.get
-import io.javalin.apibuilder.ApiBuilder.path
+import io.javalin.apibuilder.ApiBuilder.*
+import io.pleo.antaeus.core.exceptions.BillingSchedulerException
 import io.pleo.antaeus.core.exceptions.EntityNotFoundException
+import io.pleo.antaeus.core.exceptions.InvalidCronException
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
@@ -32,6 +33,16 @@ class AntaeusRest(
             // InvoiceNotFoundException: return 404 HTTP status code
             exception(EntityNotFoundException::class.java) { _, ctx ->
                 ctx.status(404)
+            }
+            // BillingSchedulerException: return 500 HTTP status code
+            exception(BillingSchedulerException::class.java) { _, ctx ->
+                ctx.status(500)
+                ctx.json("Billing scheduler error")
+            }
+            // InvalidCronException: return 400 HTTP status code
+            exception(InvalidCronException::class.java) { _, ctx ->
+                ctx.status(400)
+                ctx.json("Invalid cron expression")
             }
             // Unexpected exception: return HTTP 500
             exception(Exception::class.java) { e, _ ->
@@ -81,9 +92,32 @@ class AntaeusRest(
                     }
 
                     path("billings") {
-                        // URL: /rest/v1/billings
-                        get {
-                            it.json(billingService.chargePendingInvoices())
+
+                        // URL: /rest/v1/billings/now
+                        path("now") {
+                            post {
+                                it.json(billingService.chargePendingInvoices())
+                            }
+                        }
+
+                        path("monthly") {
+                            // URL: /rest/v1/billings/monthly
+                            post {
+                                it.json(billingService.scheduleMonthly())
+                            }
+                        }
+
+                        path("scheduled") {
+                            // URL: /rest/v1/billings/scheduled?cronExp={:cronExp}
+                            post {
+                                val cronExp: String? = if (it.queryParams("cronExp").isEmpty()) {
+                                    // No cronExp provided
+                                    null
+                                } else {
+                                    it.queryParams("cronExp").first()
+                                }
+                                it.json(billingService.schedule(cronExp))
+                            }
                         }
                     }
                 }

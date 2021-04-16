@@ -1,9 +1,8 @@
 package io.pleo.antaeus.core.services
 
-import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
-import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
-import io.pleo.antaeus.core.exceptions.NetworkException
+import io.pleo.antaeus.core.exceptions.*
 import io.pleo.antaeus.core.external.PaymentProvider
+import io.pleo.antaeus.core.schedulers.BillingScheduler
 import io.pleo.antaeus.models.Invoice
 import mu.KotlinLogging
 
@@ -13,7 +12,7 @@ class BillingService(
 ) {
     private val log = KotlinLogging.logger {}
 
-    /*
+    /**
      * Charges all the pending invoices and return the list of paid invoices
      */
     fun chargePendingInvoices(): List<Invoice> {
@@ -21,7 +20,7 @@ class BillingService(
         val paidInvoices = mutableListOf<Invoice>()
 
         val pendingInvoices = invoiceService.fetchPendingInvoices()
-        pendingInvoices.forEach{
+        pendingInvoices.forEach {
             try {
                 if (paymentProvider.charge(it)) {
                     paidInvoices.add(invoiceService.setInvoicePaid(it.id))
@@ -46,4 +45,31 @@ class BillingService(
         return paidInvoices.toList()
     }
 
+    /**
+     * Schedule billing on 1st day of each month
+     *
+     * @throws BillingSchedulerException scheduler fail to start
+     */
+    @Throws(BillingSchedulerException::class)
+    fun scheduleMonthly(): Boolean {
+        val firstOfTheMonthCronExp = "0 0 0 1 * ?"
+        return schedule(firstOfTheMonthCronExp)
+    }
+
+    /**
+     * Schedule billing with a custom cron expression or 1st of each month if null
+     *
+     * @throws BillingSchedulerException scheduler fail to start
+     * @throws InvalidCronException cronExp is invalid
+     */
+    @Throws(BillingSchedulerException::class, InvalidCronException::class)
+    fun schedule(cronExp: String?): Boolean {
+        if (cronExp == null || cronExp.isEmpty()) {
+            throw InvalidCronException()
+        }
+
+        val billingScheduler = BillingScheduler(this)
+        log.info("Scheduling pending invoices billing...")
+        return billingScheduler.start(cronExp)
+    }
 }
