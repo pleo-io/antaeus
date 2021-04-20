@@ -1,3 +1,52 @@
+## Challenge note
+
+### Code refactoring
+I splitted AntheusDal into several *Dal classes along with mappings.kt and tables.kt files.
+IMO (and by experience) a unique class managing several entities tends to become big, messy and prone to code duplication and errors.
+I prefer classes: with a self-explanatory name, simple, short and focus on one concern. It's easier and faster to read and review.
+It also allows to have straight forward coding standards enforced during code reviews. This way devs can still code in there "own way"
+but with the same structure without effort.
+It's also useful: 
+- onboarding new devs: knowing one component structure means knowing all (except the business part of course) 
+- searching with IDE, ex: search for 'customer' gives everything related to Customer* which is very convenient
+- ... among other nice things that don't cross my mind right now =)
+
+Side effect of that is having more classes but IDEs are here to help ,)
+
+#### Example of coding standard
+A Service can only call its corresponding Dal. Ex: Service_A can only Dal_A not Dal_B.
+Instead Services call each other.
+
+### PaymentProvider
+PaymentProviderImpl implements the interface PaymentProvider
+
+## Billing
+
+### On demand
+One can ask the billing of all pending invoices at any time using:
+
+POST http://localhost:7000/rest/v1/billings/now
+
+### Automatic on 1st of each month 
+Automatic billing on 1st of each month can be scheduled using:
+
+POST http://localhost:7000/rest/v1/billings/monthly
+
+### Automatic with custom rule
+One can configure its own automatic billing rule using:
+
+POST http://localhost:7000/rest/v1/billings/scheduled?cronExp={cronExp}
+
+## Notes
+
+### Scheduler
+Since this app looks very much like a backend rest api too me,
+I still think that implementing a scheduler inside is a bad idea.
+I would rather externalise the scheduling part to keep only the "on demand" call since
+I don't like the idea of potentially having multiple schedulers spread all over the ecosystem.
+If it is not a backend api designed to be containerised and run inside a K8s cluster then it's fine =)
+Here I chose Quartz but from what I found on internet coroutine could have done the trick too.
+
 ## Antaeus
 
 Antaeus (/ænˈtiːəs/), in Greek mythology, a giant of Libya, the son of the sea god Poseidon and the Earth goddess Gaia. He compelled all strangers who were passing through the country to wrestle with him. Whenever Antaeus touched the Earth (his mother), his strength was renewed, so that even if thrown to the ground, he was invincible. Heracles, in combat with him, discovered the source of his strength and, lifting him up from Earth, crushed him to death.
@@ -84,5 +133,6 @@ The code given is structured as follows. Feel free however to modify the structu
 * [JUnit 5](https://junit.org/junit5/) - Testing framework
 * [Mockk](https://mockk.io/) - Mocking library
 * [Sqlite3](https://sqlite.org/index.html) - Database storage engine
+* [Quartz](http://www.quartz-scheduler.org/) - Quartz scheduler
 
 Happy hacking 😁!

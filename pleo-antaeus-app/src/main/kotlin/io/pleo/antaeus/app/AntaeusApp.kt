@@ -7,13 +7,14 @@
 
 package io.pleo.antaeus.app
 
-import getPaymentProvider
+import io.pleo.antaeus.core.external.PaymentProviderImpl
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
-import io.pleo.antaeus.data.AntaeusDal
-import io.pleo.antaeus.data.CustomerTable
-import io.pleo.antaeus.data.InvoiceTable
+import io.pleo.antaeus.data.dals.CustomerDal
+import io.pleo.antaeus.data.dals.InvoiceDal
+import io.pleo.antaeus.data.tables.CustomerTable
+import io.pleo.antaeus.data.tables.InvoiceTable
 import io.pleo.antaeus.rest.AntaeusRest
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -32,10 +33,12 @@ fun main() {
     val dbFile: File = File.createTempFile("antaeus-db", ".sqlite")
     // Connect to the database and create the needed tables. Drop any existing data.
     val db = Database
-        .connect(url = "jdbc:sqlite:${dbFile.absolutePath}",
+        .connect(
+            url = "jdbc:sqlite:${dbFile.absolutePath}",
             driver = "org.sqlite.JDBC",
             user = "root",
-            password = "")
+            password = ""
+        )
         .also {
             TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
             transaction(it) {
@@ -48,24 +51,26 @@ fun main() {
         }
 
     // Set up data access layer.
-    val dal = AntaeusDal(db = db)
+    val customerDal = CustomerDal(db = db)
+    val invoiceDal = InvoiceDal(db = db)
 
     // Insert example data in the database.
-    setupInitialData(dal = dal)
-
-    // Get third parties
-    val paymentProvider = getPaymentProvider()
+    setupInitialData(customerDal = customerDal, invoiceDal = invoiceDal)
 
     // Create core services
-    val invoiceService = InvoiceService(dal = dal)
-    val customerService = CustomerService(dal = dal)
+    val invoiceService = InvoiceService(invoiceDal = invoiceDal)
+    val customerService = CustomerService(customerDal = customerDal)
+
+    // Get third parties
+    val paymentProvider = PaymentProviderImpl(customerService = customerService)
 
     // This is _your_ billing service to be included where you see fit
-    val billingService = BillingService(paymentProvider = paymentProvider)
+    val billingService = BillingService(paymentProvider = paymentProvider, invoiceService = invoiceService)
 
     // Create REST web service
     AntaeusRest(
         invoiceService = invoiceService,
-        customerService = customerService
+        customerService = customerService,
+        billingService = billingService
     ).run()
 }

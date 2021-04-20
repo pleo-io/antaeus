@@ -3,10 +3,10 @@
     To be used by `AntaeusDal`.
  */
 
-package io.pleo.antaeus.data
+package io.pleo.antaeus.data.mappings
 
+import io.pleo.antaeus.data.tables.InvoiceTable
 import io.pleo.antaeus.models.Currency
-import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
@@ -20,9 +20,4 @@ fun ResultRow.toInvoice(): Invoice = Invoice(
     ),
     status = InvoiceStatus.valueOf(this[InvoiceTable.status]),
     customerId = this[InvoiceTable.customerId]
-)
-
-fun ResultRow.toCustomer(): Customer = Customer(
-    id = this[CustomerTable.id],
-    currency = Currency.valueOf(this[CustomerTable.currency])
 )
