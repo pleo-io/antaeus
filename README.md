@@ -24,7 +24,7 @@ Open the project using your favorite text editor. If you are using IntelliJ, you
 ### Building
 
 ```
-./gradlew build
+./gradlew clean build
 ```
 
 ### Running
