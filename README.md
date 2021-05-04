@@ -93,3 +93,47 @@ The code given is structured as follows. Feel free however to modify the structu
 * [Sqlite3](https://sqlite.org/index.html) - Database storage engine
 
 Happy hacking 😁!
+
+## Progress
+
+Tue, May 4th
+1. Project build - **10 mins**
+  * updated gradle version to 6.3 to avoid build failure: java.lang.NoClassDefFoundError: Could not initialize class org.codehaus.groovy.vmplugin.v7.Java7)
+  * **TODO**: fix warning during app start-up [See](https://docs.gradle.org/6.3/userguide/command_line_interface.html#sec:command_line_warnings)
+2. Application Startup - **20 mins**
+  * updated docker start related documentation
+  * investigated existing docker-start.sh and docker-clean.sh scripts - **1 hour**
+    * **TODO**: create separate Dockerfile for dev-mode to avoid image rebuild
+3. Tested existing endpoints via Postman - **10 mins**
+   
+Wed, May 5th
+4. Exploration
+  * Event-driven architecture
+  * Batch processing
+  * Akka
+  * Kotlin Coroutins
+5. Requirements:
+  * test coverage:
+    * functional tests with happy path and few corner cases (pending payments, network outages, slow payments)
+    * performance testing
+      * 10_0000 invoices
+      * 1000_0000 invoices
+  * no third-party libs
+  * !!!put down Use Cases current impl should support
+  * rest
+    * filter out invoices by status: PAID, PENDING
+    * filter out invoices by targetDate
+  * billing  
+    * record invoice payments separately: required to track unsuccessful tx
+  * payment provider
+    * I plan to reduce scope implementing provider, maybe make mock more sophisticated? 
+  * events logging:
+    * billing started
+    * billing occurred
+    * billing failed
+6. High-level architecture:
+  * Scheduler that initiates billing process
+  * Invoice Generator that retrieves invoices that are ready for billing - by chunks
+  * Billing Processor - performs invoice billing (maybe it worth to perform batch update) 
+  * Utilize Coroutines + Channel/Actor
+
