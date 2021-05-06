@@ -136,4 +136,13 @@ Wed, May 5th
   * Invoice Generator that retrieves invoices that are ready for billing - by chunks
   * Billing Processor - performs invoice billing (maybe it worth to perform batch update) 
   * Utilize Coroutines + Channel/Actor
-
+Thu, May 6th - ***5hours***
+7. added Kotlin Coroutines support to the project: including tests
+8. Created draft prototype with coroutines: started with fan-out work distribution through channel; plan to use Actor as the next step
+9. Draft business logic implementation:
+  * extended Invoice with fields
+    * targetDate - date up to which invoicing system expects to bill for
+    * createdAt - time, when invoice was created
+    * still considering required Invoice statuses
+  * Added InvoicePayment Entity: each record keeps the history of payments/attempts for the given invoice
+10. Implemented draft Billing Service
