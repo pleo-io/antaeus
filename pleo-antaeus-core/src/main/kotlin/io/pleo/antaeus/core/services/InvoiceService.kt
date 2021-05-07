@@ -8,7 +8,6 @@ import io.pleo.antaeus.core.exceptions.InvoiceNotFoundException
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
-import mu.KotlinLogging
 import java.util.*
 
 class InvoiceService(private val dal: AntaeusDal) {
@@ -21,13 +20,11 @@ class InvoiceService(private val dal: AntaeusDal) {
         return dal.fetchInvoice(id) ?: throw InvoiceNotFoundException(id)
     }
 
-    private val logger = KotlinLogging.logger {}
-
     suspend fun chargeInvoice(invoiceId: Int, chargeAction: (invoice: Invoice) -> Boolean): Invoice {
         val invoice = fetch(invoiceId)
         val invoicePaymentId = dal.createInvoicePayment(invoice.amount, invoice, false, Date())
         return dal.withTransaction {
-            val success = chargeAction(invoice);
+            val success = chargeAction(invoice)
             if (success) {
                 dal.updateInvoicePaymentStatus(invoicePaymentId, true, Date())
                 dal.updateInvoiceStatus(invoice.id, InvoiceStatus.PAID)

@@ -1,4 +1,5 @@
-import io.pleo.antaeus.data.AntaeusDal
+package io.pleo.antaeus.data
+
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money

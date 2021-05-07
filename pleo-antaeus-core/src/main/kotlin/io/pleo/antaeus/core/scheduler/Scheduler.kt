@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 class Scheduler(private val task: Runnable) {
     private val logger = KotlinLogging.logger {}
-    private val executor = Executors.newScheduledThreadPool(1)!!
+    private val executor = Executors.newScheduledThreadPool(1)
 
     fun scheduleExecution(every: Every) {
 

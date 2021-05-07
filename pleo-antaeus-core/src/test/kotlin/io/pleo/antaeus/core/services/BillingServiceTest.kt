@@ -7,10 +7,7 @@ import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
 import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.PaymentProvider
-import io.pleo.antaeus.data.AntaeusDal
-import io.pleo.antaeus.data.CustomerTable
-import io.pleo.antaeus.data.InvoicePaymentTable
-import io.pleo.antaeus.data.InvoiceTable
+import io.pleo.antaeus.data.*
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.factories.createInvoice
@@ -24,13 +21,12 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import setupInitialData
 
-val invoiceForNotRegisteredCustomer = createInvoice();
-val invoiceWithCurrencyMismatch = createInvoice();
-val invoiceWithNetworkException = createInvoice();
-val invoiceCharged = createInvoice();
-val invoiceNotCharged = createInvoice();
+val invoiceForNotRegisteredCustomer = createInvoice()
+val invoiceWithCurrencyMismatch = createInvoice()
+val invoiceWithNetworkException = createInvoice()
+val invoiceCharged = createInvoice()
+val invoiceNotCharged = createInvoice()
 
 class BillingServiceTest {
     private val tables = arrayOf(InvoiceTable, InvoicePaymentTable, CustomerTable)
@@ -54,7 +50,7 @@ class BillingServiceTest {
         coEvery { fetch(invoiceNotCharged.id) } returns invoiceNotCharged
     }
 
-    val billingService = BillingService(paymentProvider, invoiceService)
+    private val billingService = BillingService(paymentProvider, invoiceService)
 
     @BeforeEach
     fun before() {
@@ -75,7 +71,7 @@ class BillingServiceTest {
         assertThrows<CustomerNotFoundException> {
             billingService.chargeInvoice(invoiceForNotRegisteredCustomer)
         }
-        assertInvoiceCharged(invoiceForNotRegisteredCustomer, paymentsNumber = 1, paymentsSuccess = false);
+        assertInvoiceCharged(invoiceForNotRegisteredCustomer, paymentsNumber = 1, paymentsSuccess = false)
     }
 
     @Test
@@ -83,7 +79,7 @@ class BillingServiceTest {
         assertThrows<CurrencyMismatchException> {
             billingService.chargeInvoice(invoiceWithCurrencyMismatch)
         }
-        assertInvoiceCharged(invoiceWithCurrencyMismatch, paymentsNumber = 1, paymentsSuccess = false);
+        assertInvoiceCharged(invoiceWithCurrencyMismatch, paymentsNumber = 1, paymentsSuccess = false)
     }
 
     @Test
@@ -91,26 +87,26 @@ class BillingServiceTest {
         assertThrows<NetworkException> {
             billingService.chargeInvoice(invoiceWithNetworkException)
         }
-        assertInvoiceCharged(invoiceWithNetworkException, paymentsNumber = 1, paymentsSuccess = false);
+        assertInvoiceCharged(invoiceWithNetworkException, paymentsNumber = 1, paymentsSuccess = false)
     }
 
     @Test
     internal fun `fail to charge invoice when insufficient customer funds`() = runBlocking {
         billingService.chargeInvoice(invoiceNotCharged)
-        assertInvoiceCharged(invoiceNotCharged, paymentsNumber = 1, paymentsSuccess = false);
+        assertInvoiceCharged(invoiceNotCharged, paymentsNumber = 1, paymentsSuccess = false)
     }
 
     @Test
     // FIXME unstable
     internal fun `charged invoice`() = runBlocking {
         val invoice = billingService.chargeInvoice(invoiceCharged)
-        assertInvoiceCharged(invoiceCharged, paymentsNumber = 1, paymentsSuccess = true);
+        assertInvoiceCharged(invoiceCharged, paymentsNumber = 1, paymentsSuccess = true)
         Assertions.assertEquals(InvoiceStatus.PAID, invoice.status)
     }
 
     private suspend fun assertInvoiceCharged(invoice: Invoice, paymentsNumber: Int, paymentsSuccess: Boolean) {
         val invoicePayments = dal.fetchInvoicePayments(invoice.id)
-        Assertions.assertEquals(paymentsNumber, invoicePayments.size);
-        Assertions.assertEquals(paymentsSuccess, invoicePayments[0].success);
+        Assertions.assertEquals(paymentsNumber, invoicePayments.size)
+        Assertions.assertEquals(paymentsSuccess, invoicePayments[0].success)
     }
 }
