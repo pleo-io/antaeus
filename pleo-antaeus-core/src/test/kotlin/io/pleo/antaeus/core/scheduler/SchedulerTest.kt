@@ -5,17 +5,15 @@ import io.mockk.mockk
 import io.pleo.antaeus.core.services.InvoiceService
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.Invoice
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
-import java.util.*
-import io.pleo.antaeus.core.common.factories.createInvoice as createTestInvoice
+import java.lang.Runnable
+import java.util.concurrent.TimeUnit
+import io.pleo.antaeus.models.factories.createInvoice as createTestInvoice
 
 class SchedulerTest {
-    private val scheduler = Scheduler()
     private val dal = mockk<AntaeusDal> {
         coEvery { fetchInvoices() } returns (0..9).map { createTestInvoice() }
     }
@@ -23,20 +21,29 @@ class SchedulerTest {
 
     @Test
     fun `run scheduled task`() = runBlocking {
-
-        scheduler.schedule(Date()) {
-            val producer = invoiceGenerator(invoiceService)
-            repeat(5) {
-                billingProcessor(it, producer)
+        val task = Runnable {
+            runBlocking {
+                launch(Dispatchers.Default) {
+                    val producer = invoiceGenerator(invoiceService)
+                    repeat(5) {
+                        billingProcessor(it, producer)
+                    }
+                }
             }
         }
+        val scheduler = Scheduler(task)
+        scheduler.scheduleExecution(Every(2, TimeUnit.SECONDS))
+        delay(15000)
+        scheduler.stop()
         println("test started")
     }
+
 }
 
 fun CoroutineScope.billingProcessor(id: Int, channel: ReceiveChannel<Invoice>) = launch {
     for (msg in channel) {
         println("${Thread.currentThread().name} Processor #$id received $msg")
+        delay(100)
     }
 }
 

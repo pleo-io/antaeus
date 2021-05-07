@@ -2,9 +2,9 @@ package io.pleo.antaeus.core.services
 
 import io.mockk.coEvery
 import io.mockk.mockk
-import io.pleo.antaeus.core.common.factories.createInvoice
 import io.pleo.antaeus.core.exceptions.InvoiceNotFoundException
 import io.pleo.antaeus.data.AntaeusDal
+import io.pleo.antaeus.models.factories.createInvoice
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

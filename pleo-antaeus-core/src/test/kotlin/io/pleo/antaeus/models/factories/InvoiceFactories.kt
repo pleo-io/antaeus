@@ -1,4 +1,4 @@
-package io.pleo.antaeus.core.common.factories
+package io.pleo.antaeus.models.factories
 
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Invoice
@@ -9,7 +9,9 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
-var idCounter = AtomicInteger()
+// TODO remove this factory in favour to the same one located in the pleo-antaeus-models module
+// TODO use common test fixtures
+var idCounter = AtomicInteger(1)
 
 fun nextId() = idCounter.getAndIncrement()
 fun randomCurrency() = Currency.values()[Random.nextInt(0, Currency.values().size)]
