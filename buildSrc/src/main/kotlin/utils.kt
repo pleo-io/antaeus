@@ -5,6 +5,7 @@ import org.gradle.kotlin.dsl.kotlin
 
 const val junitVersion = "5.7.0"
 const val kotlinCoroutinesVersion = "1.3.5"
+const val h2Version = "1.4.199"
 
 /**
  * Configures the current project as a Kotlin project by adding the Kotlin `stdlib` as a dependency.
@@ -39,5 +40,6 @@ fun Project.dataLibs() {
     dependencies {
         "implementation"("org.jetbrains.exposed:exposed:0.17.7")
         "implementation"("org.xerial:sqlite-jdbc:3.30.1")
+        "testImplementation"("com.h2database", "h2", h2Version)
     }
 }

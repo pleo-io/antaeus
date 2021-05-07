@@ -87,7 +87,7 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
-    suspend fun createInvoicePayment(amount: Money, invoice: Invoice, success: Boolean = false, paymentDate: Date = Date()): Int? {
+    suspend fun createInvoicePayment(amount: Money, invoice: Invoice, success: Boolean = false, paymentDate: Date = Date()): Int {
         val id = withTransaction {
             // Insert the invoice and returns its new id.
             InvoicePaymentTable
@@ -101,6 +101,19 @@ class AntaeusDal(private val db: Database) {
         }
 
         return id
+    }
+
+    suspend fun updateInvoicePaymentStatus(id: Int, success: Boolean, paymentDate: Date = Date()): InvoicePayment? {
+        val invoicePaymentId = withTransaction {
+            // Insert the invoice and returns its new id.
+            InvoicePaymentTable
+                    .update({InvoicePaymentTable.id eq id}) {
+                        it[this.success] = success
+                        it[this.paymentDate] = DateTime(paymentDate)
+                    }
+        }
+
+        return fetchInvoicePayment(invoicePaymentId)
     }
 
     suspend fun fetchCustomer(id: Int): Customer? {

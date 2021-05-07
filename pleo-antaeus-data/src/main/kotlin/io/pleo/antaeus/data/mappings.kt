@@ -23,8 +23,8 @@ fun ResultRow.toInvoice(): Invoice = Invoice(
 fun ResultRow.toInvoicePayment(): InvoicePayment = InvoicePayment(
         id = this[InvoicePaymentTable.id],
         amount = Money(
-                value = this[InvoiceTable.value],
-                currency = Currency.valueOf(this[InvoiceTable.currency])
+                value = this[InvoicePaymentTable.value],
+                currency = Currency.valueOf(this[InvoicePaymentTable.currency])
         ),
         paymentDate = this[InvoicePaymentTable.paymentDate].toDate(),
         success = this[InvoicePaymentTable.success],
