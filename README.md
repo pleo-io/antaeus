@@ -132,7 +132,7 @@ Wed, May 5th
     * billing occurred
     * billing failed
 6. High-level architecture:
-  * Scheduler that initiates billing process
+  * Scheduler that initiates billing process - cron scheduler https://github.com/justwrote/kjob
   * Invoice Generator that retrieves invoices that are ready for billing - by chunks
   * Billing Processor - performs invoice billing (maybe it worth to perform batch update) 
   * Utilize Coroutines + Channel/Actor
