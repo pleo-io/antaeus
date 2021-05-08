@@ -11,12 +11,14 @@ import io.pleo.antaeus.models.*
 import io.pleo.antaeus.models.Currency
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import mu.KotlinLogging
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.joda.time.DateTime
 import java.util.Date
 
 class AntaeusDal(private val db: Database) {
+    private val logger = KotlinLogging.logger {}
 
     suspend fun <T> withTransaction(context: CoroutineDispatcher = Dispatchers.Default, action: suspend Transaction.() -> T): T {
         return newSuspendedTransaction(context, db, action)
@@ -58,16 +60,11 @@ class AntaeusDal(private val db: Database) {
         return fetchInvoice(id)
     }
 
-    suspend fun updateInvoiceStatus(id: Int, status: InvoiceStatus): Invoice? {
-        val invoiceId = withTransaction {
-            // Insert the invoice and returns its new id.
-            InvoiceTable
-                    .update({InvoiceTable.id eq id}) {
-                        it[this.status] = status.toString()
-                    }
-        }
-
-        return fetchInvoice(invoiceId)
+    fun updateInvoiceStatus(id: Int, status: InvoiceStatus): Int {
+        return InvoiceTable
+            .update({ InvoiceTable.id eq id }) {
+                it[this.status] = status.toString()
+            }
     }
 
     suspend fun fetchInvoicePayments(invoiceId: Int): List<InvoicePayment> {
@@ -89,6 +86,9 @@ class AntaeusDal(private val db: Database) {
 
     suspend fun createInvoicePayment(amount: Money, invoice: Invoice, success: Boolean = false, paymentDate: Date = Date()): Int {
         val id = withTransaction {
+            addLogger(StdOutSqlLogger)
+            logger.info {"${this.hashCode()} create invoice payment: ${invoice.id}"}
+
             // Insert the invoice and returns its new id.
             InvoicePaymentTable
                     .insert {
@@ -103,17 +103,12 @@ class AntaeusDal(private val db: Database) {
         return id
     }
 
-    suspend fun updateInvoicePaymentStatus(id: Int, success: Boolean, paymentDate: Date = Date()): InvoicePayment? {
-        val invoicePaymentId = withTransaction {
-            // Insert the invoice and returns its new id.
-            InvoicePaymentTable
-                    .update({InvoicePaymentTable.id eq id}) {
-                        it[this.success] = success
-                        it[this.paymentDate] = DateTime(paymentDate)
-                    }
-        }
-
-        return fetchInvoicePayment(invoicePaymentId)
+    fun updateInvoicePaymentStatus(id: Int, success: Boolean, paymentDate: Date = Date()): Int {
+        return InvoicePaymentTable
+            .update({ InvoicePaymentTable.id eq id }) {
+                it[this.success] = success
+                it[this.paymentDate] = DateTime(paymentDate)
+            }
     }
 
     suspend fun fetchCustomer(id: Int): Customer? {
