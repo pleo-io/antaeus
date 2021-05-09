@@ -15,7 +15,6 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.joda.time.DateTime
-import java.util.*
 import java.util.Date
 
 class AntaeusDal(private val db: Database) {
@@ -110,8 +109,7 @@ class AntaeusDal(private val db: Database) {
     ): Int {
         return withTransaction {
             addLogger(StdOutSqlLogger)
-            val txId = UUID.randomUUID().toString()
-            logger.info { "inv[${invoice.id}]-tx[$txId] before create invoice payment for invoice: ${invoice.id}" }
+            logger.info { "inv[${invoice.id}] before create invoice payment for invoice: ${invoice.id}" }
 
             // Insert the invoice and returns its new id.
             InvoicePaymentTable

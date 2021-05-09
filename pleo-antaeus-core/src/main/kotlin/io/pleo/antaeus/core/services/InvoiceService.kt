@@ -31,20 +31,18 @@ class InvoiceService(private val dal: AntaeusDal) {
 
     suspend fun chargeInvoice(invoiceId: Int, chargeAction: suspend (invoice: Invoice) -> Boolean): Invoice {
         dal.withTransaction {
-            val txId = UUID.randomUUID().toString()
             addLogger(StdOutSqlLogger)
             val invoice = fetch(invoiceId)
             val invoicePaymentId = dal.createInvoicePayment(invoice.amount, invoice, false, Date())
-            logger.info { "inv[$invoiceId]-tx[$txId] - created payment: $invoicePaymentId" }
+            logger.info { "inv[$invoiceId] - created payment: $invoicePaymentId" }
             val success = chargeAction(invoice)
-            logger.info { "inv[$invoiceId]-tx[$txId] - charge action status: $success" }
+            logger.info { "inv[$invoiceId] - charge action status: $success" }
             if (success) {
                 suspendedTransaction {
-                    val txId = UUID.randomUUID().toString()
-                    logger.info { "inv[$invoiceId]-tx[$txId] - before invoice status update" }
+                    logger.info { "inv[$invoiceId] - before invoice status update" }
                     dal.updateInvoicePaymentStatus(invoicePaymentId, success = true, paymentDate = Date())
                     dal.updateInvoiceStatus(invoice.id, status = InvoiceStatus.PAID)
-                    logger.info { "inv[$invoiceId]-tx[$txId] - after invoice status update" }
+                    logger.info { "inv[$invoiceId] - after invoice status update" }
                 }
             }
         }
