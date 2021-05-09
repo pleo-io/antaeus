@@ -169,7 +169,7 @@ Happy hacking 😁!
     
 ### Sat, May 8th
 
-Plan:
+####Plan:
 
 * BillingService:
     * charge invoice taking into account Target Date, invoice status, currency
@@ -180,4 +180,16 @@ Plan:
     * if there will be some time, try to implement some sort of job scheduler
 * Payment Provider
     * I don't plan to implement full-fledged payment provider, just extend existing mock to emulate basic use cases,
-      like: network outage; currency mismatch, customer not found  
+      like: network outage; currency mismatch, customer not found
+
+####Progress: **4 hours**
+
+* Performance testing:
+    * 100_000 invoices - billing 40 sec
+    * 10_000 invoices - 3.5 sec
+    * there was the problem to load large dataset into H2 in-memory DB (used for integration tests)
+        * OutOfMemory exception for 1_000_000 table records; to fix it, seed population script should be updated to 
+          use batch inserts, instead of tx - don't have a time today to fix it
+* refactored tx management for InvoiceService.chargeInvoice
+* added additional exceptions handling and logging
+* charge invoices by status == PENDING and with passed targetDate

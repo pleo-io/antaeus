@@ -17,7 +17,6 @@ import java.util.*
 class InvoiceService(private val dal: AntaeusDal) {
     private val logger = KotlinLogging.logger {}
 
-    // TODO: filter out paid invoices, paginate over invoices
     suspend fun fetchAll(): List<Invoice> {
         return dal.fetchInvoices()
     }
@@ -26,20 +25,26 @@ class InvoiceService(private val dal: AntaeusDal) {
         return dal.fetchInvoice(id) ?: throw InvoiceNotFoundException(id)
     }
 
-    suspend fun chargeInvoice(invoiceId: Int, chargeAction: (invoice: Invoice) -> Boolean): Invoice {
+    suspend fun fetchByStatusAndTargetDate(status: InvoiceStatus, targetDate: Date): Iterable<Invoice> {
+        return dal.fetchInvoicesByStatusAndTargetDate(status.toString(), targetDate)
+    }
+
+    suspend fun chargeInvoice(invoiceId: Int, chargeAction: suspend (invoice: Invoice) -> Boolean): Invoice {
         dal.withTransaction {
-            val txId = this.hashCode()
+            val txId = UUID.randomUUID().toString()
             addLogger(StdOutSqlLogger)
             val invoice = fetch(invoiceId)
             val invoicePaymentId = dal.createInvoicePayment(invoice.amount, invoice, false, Date())
-            logger.info { "$txId - created payment $invoicePaymentId" }
+            logger.info { "inv[$invoiceId]-tx[$txId] - created payment: $invoicePaymentId" }
             val success = chargeAction(invoice)
-            logger.info { "$txId - after charge action: $success" }
+            logger.info { "inv[$invoiceId]-tx[$txId] - charge action status: $success" }
             if (success) {
                 suspendedTransaction {
-                    logger.info { "${this.hashCode()} - update invoice status" }
+                    val txId = UUID.randomUUID().toString()
+                    logger.info { "inv[$invoiceId]-tx[$txId] - before invoice status update" }
                     dal.updateInvoicePaymentStatus(invoicePaymentId, success = true, paymentDate = Date())
                     dal.updateInvoiceStatus(invoice.id, status = InvoiceStatus.PAID)
+                    logger.info { "inv[$invoiceId]-tx[$txId] - after invoice status update" }
                 }
             }
         }

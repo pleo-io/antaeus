@@ -9,7 +9,7 @@ import java.math.BigDecimal
 import java.util.*
 import kotlin.random.Random
 
-fun nextMonthDate(date: Date): Date {
+fun nextMonthDate(date: Date = Date()): Date {
     val mutableDateTime = MutableDateTime(date, DateTimeZone.UTC)
     mutableDateTime.addMonths(1)
     mutableDateTime.dayOfMonth = 1
@@ -19,6 +19,7 @@ fun nextMonthDate(date: Date): Date {
 
 // This will create all schemas and setup initial data
 suspend fun setupInitialData(dal: AntaeusDal, customersNum: Int = 100, invoicesPerCustomerNum: Int = 10)  {
+    // TODO: For seed population batch insert should be used
     val customers = (1..customersNum).mapNotNull {
         dal.createCustomer(
                 currency = Currency.values()[Random.nextInt(0, Currency.values().size)]
@@ -35,7 +36,7 @@ suspend fun setupInitialData(dal: AntaeusDal, customersNum: Int = 100, invoicesP
                     customer = customer,
                     status = if (it == 1) InvoiceStatus.PENDING else InvoiceStatus.PAID,
                     createdAt = Date(),
-                    targetDate = nextMonthDate(Date())
+                    targetDate = nextMonthDate()
                 )
         }
     }

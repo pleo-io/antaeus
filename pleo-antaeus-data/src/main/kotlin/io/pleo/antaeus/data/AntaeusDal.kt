@@ -15,6 +15,7 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.joda.time.DateTime
+import java.util.*
 import java.util.Date
 
 class AntaeusDal(private val db: Database) {
@@ -42,6 +43,23 @@ class AntaeusDal(private val db: Database) {
                     .map { it.toInvoice() }
         }
     }
+
+
+    suspend fun fetchInvoicesByStatusAndTargetDate(status: String, targetDate: Date): Iterable<Invoice> {
+        return withTransaction(Dispatchers.IO) {
+            fetchInvoicesByStatusQuery(status, targetDate).map { it.toInvoice() }
+        }
+    }
+
+    suspend fun invoicesByStatusAndTargetDateCount(status: String, targetDate: Date): Int {
+        return withTransaction {
+            fetchInvoicesByStatusQuery(status, targetDate).count()
+        }
+    }
+
+    private fun fetchInvoicesByStatusQuery(status: String, targetDate: Date) =
+        InvoiceTable
+            .select { InvoiceTable.status eq status and InvoiceTable.targetDate.lessEq(DateTime(targetDate)) }
 
     suspend fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING, targetDate: Date, createdAt: Date = Date()): Invoice? {
         val id = withTransaction {
@@ -84,23 +102,27 @@ class AntaeusDal(private val db: Database) {
         }
     }
 
-    suspend fun createInvoicePayment(amount: Money, invoice: Invoice, success: Boolean = false, paymentDate: Date = Date()): Int {
-        val id = withTransaction {
+    suspend fun createInvoicePayment(
+        amount: Money,
+        invoice: Invoice,
+        success: Boolean = false,
+        paymentDate: Date = Date()
+    ): Int {
+        return withTransaction {
             addLogger(StdOutSqlLogger)
-            logger.info {"${this.hashCode()} create invoice payment: ${invoice.id}"}
+            val txId = UUID.randomUUID().toString()
+            logger.info { "inv[${invoice.id}]-tx[$txId] before create invoice payment for invoice: ${invoice.id}" }
 
             // Insert the invoice and returns its new id.
             InvoicePaymentTable
-                    .insert {
-                        it[this.value] = amount.value
-                        it[this.currency] = amount.currency.toString()
-                        it[this.paymentDate] = DateTime(paymentDate)
-                        it[this.success] = success
-                        it[this.invoiceId] = invoice.id
-                    } get InvoicePaymentTable.id
+                .insert {
+                    it[value] = amount.value
+                    it[currency] = amount.currency.toString()
+                    it[this.paymentDate] = DateTime(paymentDate)
+                    it[this.success] = success
+                    it[invoiceId] = invoice.id
+                } get InvoicePaymentTable.id
         }
-
-        return id
     }
 
     fun updateInvoicePaymentStatus(id: Int, success: Boolean, paymentDate: Date = Date()): Int {
