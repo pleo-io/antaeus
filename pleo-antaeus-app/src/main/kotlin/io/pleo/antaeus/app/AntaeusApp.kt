@@ -7,11 +7,17 @@
 
 package io.pleo.antaeus.app
 
+import io.pleo.antaeus.core.scheduler.Scheduler
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.core.workers.BillingProcessor
 import io.pleo.antaeus.data.*
 import io.pleo.antaeus.rest.AntaeusRest
+import it.justwrote.kjob.InMem
+import it.justwrote.kjob.KronJob
+import it.justwrote.kjob.kjob
+import it.justwrote.kjob.kron.KronModule
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -21,6 +27,9 @@ import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.sql.Connection
+
+// TODO fix up crontab
+object MonthlyBillingJob : KronJob("monthly-billing-job", "0 0 1 * * *")
 
 fun main() {
     // The tables to create in the database.
@@ -61,6 +70,18 @@ fun main() {
 
     // This is _your_ billing service to be included where you see fit
     val billingService = BillingService(paymentProvider = paymentProvider, invoiceService = invoiceService)
+
+    val billingProcessor = BillingProcessor(billingService, invoiceService)
+
+    val kjob = kjob(InMem) {
+        extension(KronModule)
+    }.start()
+
+    val kronScheduler = Scheduler(MonthlyBillingJob, kjob)
+
+    kronScheduler.schedule { date ->
+        billingProcessor.process(date)
+    }
 
     // Create REST web service
     AntaeusRest(

@@ -167,14 +167,13 @@ Happy hacking 😁!
 
 ### Fri, May 7th - **5 hours**
     
-### Sat, May 8th
+### Sat, May 8th - **3 hours**
 
 ####Plan:
 
 * BillingService:
     * charge invoice taking into account Target Date, invoice status, currency
     * add logging and error handling
-    * 
 * Scheduler:
     * utilize kjob - in scope of this Project I have no time to implement persistent job scheduler
     * if there will be some time, try to implement some sort of job scheduler
@@ -182,7 +181,7 @@ Happy hacking 😁!
     * I don't plan to implement full-fledged payment provider, just extend existing mock to emulate basic use cases,
       like: network outage; currency mismatch, customer not found
 
-####Progress: **4 hours**
+####Progress:
 
 * Performance testing:
     * 100_000 invoices - billing 40 sec
@@ -193,3 +192,27 @@ Happy hacking 😁!
 * refactored tx management for InvoiceService.chargeInvoice
 * added additional exceptions handling and logging
 * charge invoices by status == PENDING and with passed targetDate
+
+### Sat, May 9th - **3 hours**
+
+####Plan:
+
+* Scheduler:
+    * encapsulate kjob implementation
+    * move Producer and Processor to separate classes
+    
+####Progress
+
+* Scheduler:
+  * moved kjob into Scheduler impl; refactored integration tests
+  * created BillingProcessor
+  
+####TODO:
+
+* Update REST endpoint to filter PAID invoices
+* Gather info about processed jobs
+* Fix production crontab since during testing it appears to have wrong format
+* Fix unstable BillingServiceTest: actually it requires simply proper mokking
+* Customer currency check!!! 
+* ? batch population for seeds
+* ? common test fixtures

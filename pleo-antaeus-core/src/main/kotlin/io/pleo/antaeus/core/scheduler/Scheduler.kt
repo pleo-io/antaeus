@@ -1,33 +1,29 @@
 package io.pleo.antaeus.core.scheduler
 
+import it.justwrote.kjob.KJob
+import it.justwrote.kjob.KronJob
+import it.justwrote.kjob.job.JobExecutionType
+import it.justwrote.kjob.kron.Kron
 import mu.KotlinLogging
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
+import java.util.*
 
-class Scheduler(private val task: Runnable) {
-    private val logger = KotlinLogging.logger {}
-    private val executor = Executors.newScheduledThreadPool(1)
+class Scheduler(private val kronJob: KronJob, val kjob: KJob) {
+    private val logger1 = KotlinLogging.logger {}
 
-    fun scheduleExecution(every: Every) {
-
-        val taskWrapper = Runnable {
-            task.run()
+    fun schedule(action: suspend (date: Date) -> Unit) {
+        kjob(Kron).kron(kronJob) {
+            executionType = JobExecutionType.NON_BLOCKING
+            maxRetries = 3
+            execute {
+                action(Date())
+            }.onError {
+                // errors will automatically logged but we might want to do some metrics or something
+                logger1.error { "Oh no! Our code for $jobName with id $jobId failed us with the exception $error" }
+            }.onComplete {
+                // Also we can define a block that gets executed when our execution has been finished
+                logger1.info { "Everything for job $jobName with id $jobId worked out as planed!" }
+                logger1.info { "The execution took ${time().toMillis()}ms" }
+            }
         }
-
-        executor.scheduleWithFixedDelay(taskWrapper, every.n, every.n, every.unit)
-    }
-
-
-    fun stop() {
-        executor.shutdown()
-
-        try {
-            executor.awaitTermination(1, TimeUnit.HOURS)
-        } catch (e: InterruptedException) {
-            logger.warn(e) { "Unexpected error during scheduler termination occurred." }
-        }
-
     }
 }
-
-data class Every(val n: Long, val unit: TimeUnit)

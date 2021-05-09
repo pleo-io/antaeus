@@ -5,14 +5,15 @@ import io.mockk.mockk
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.core.workers.BillingProcessor
 import io.pleo.antaeus.data.*
-import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
-import kotlinx.coroutines.CoroutineScope
+import it.justwrote.kjob.InMem
+import it.justwrote.kjob.KronJob
+import it.justwrote.kjob.kjob
+import it.justwrote.kjob.kron.KronModule
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.ReceiveChannel
-import kotlinx.coroutines.channels.produce
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
@@ -20,11 +21,13 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.*
 
-const val PROCESSORS_NUMBER = 8
+object MinuteBillingJob : KronJob("monthly-billing-job", "0 * * ? * * *")
 
 class SchedulerTest {
     private val logger = KotlinLogging.logger {}
@@ -43,6 +46,12 @@ class SchedulerTest {
 
     private val billingService = BillingService(paymentProvider, invoiceService)
 
+    private val billingProcessor = BillingProcessor(billingService, invoiceService)
+
+    val kjob = kjob(InMem) {
+        extension(KronModule)
+    }
+
     @BeforeEach
     fun before() {
         transaction(db) {
@@ -52,39 +61,34 @@ class SchedulerTest {
             // Create all tables
             SchemaUtils.create(*tables)
             runBlocking {
-                setupInitialData(dal = dal, customersNum = 100, invoicesPerCustomerNum = 10)
+                setupInitialData(
+                    dal = dal,
+                    customersNum = 1000,
+                    invoicesPerCustomerNum = 10,
+                    targetDate = Date()
+                )
             }
         }
+    }
+
+    @BeforeEach
+    fun startKjob() {
+        kjob.start()
+    }
+
+    @AfterEach
+    fun stopKjob() {
+        kjob.shutdown()
     }
 
     @Test
     fun `run scheduled task`() = runBlocking(Dispatchers.Default) {
-        val scheduler = Scheduler()
-        val job = scheduler.scheduleExecution(nextMonthDate()) { date ->
-            val producer = invoiceGenerator(date, invoiceService)
-            repeat(PROCESSORS_NUMBER) {
-                billingProcessor(it, producer)
-            }
+        val scheduler = Scheduler(MinuteBillingJob, kjob)
+        scheduler.schedule { date ->
+            billingProcessor.process(date)
         }
-        job.join()
-        println("test ended")
-//        assertEquals(0, dal.invoicesByStatusAndTargetDateCount(InvoiceStatus.PENDING.toString(), nextMonthDate()))
+        delay(66_000)
+        assertEquals(0, dal.invoicesByStatusAndTargetDateCount(InvoiceStatus.PENDING.toString(), nextMonthDate()))
     }
 
-    private fun CoroutineScope.billingProcessor(id: Int, channel: ReceiveChannel<Invoice>) = launch {
-        for (invoice in channel) {
-            try {
-                logger.info { "${Thread.currentThread().name} Processor #$id received $invoice" }
-                billingService.chargeInvoice(invoice)
-            } catch (e: Exception) {
-                logger.error(e) { "Unexpected Error: Invoice Charge" }
-            }
-        }
-    }
-
-    fun CoroutineScope.invoiceGenerator(targetDate: Date, invoiceService: InvoiceService) = produce {
-        val invoices = invoiceService.fetchByStatusAndTargetDate(InvoiceStatus.PENDING, targetDate)
-        logger.info { "invoices ${invoices.map { it.id }}" }
-        invoices.forEach { send(it) }
-    }
 }
