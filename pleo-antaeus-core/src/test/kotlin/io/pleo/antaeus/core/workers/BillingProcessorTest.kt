@@ -1,11 +1,11 @@
-package io.pleo.antaeus.core.scheduler
+package io.pleo.antaeus.core.workers
 
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.pleo.antaeus.core.external.PaymentProvider
+import io.pleo.antaeus.core.scheduler.Scheduler
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.InvoiceService
-import io.pleo.antaeus.core.workers.BillingProcessor
 import io.pleo.antaeus.data.*
 import io.pleo.antaeus.models.InvoiceStatus
 import it.justwrote.kjob.InMem
@@ -27,25 +27,27 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.*
 
-object MinuteBillingJob : KronJob("monthly-billing-job", "0 * * ? * * *")
+object MinuteBillingJob : KronJob("minute-billing-job", "0 * * ? * * *")
 
-class SchedulerTest {
-    private val tables = arrayOf(InvoiceTable, InvoicePaymentTable, CustomerTable)
-
-    private val db by lazy { Database.connect("jdbc:h2:mem:db1;DB_CLOSE_DELAY=-1;", "org.h2.Driver", "root", "") }
-    private val dal = AntaeusDal(db = db)
+class BillingProcessorTest {
     private val now = Date()
 
+    private val tables = arrayOf(InvoiceTable, InvoicePaymentTable, CustomerTable)
+    private val db by lazy { Database.connect("jdbc:h2:mem:db1;DB_CLOSE_DELAY=-1;", "org.h2.Driver", "root", "") }
 
+    private val dal = AntaeusDal(db = db)
     private val invoiceService = InvoiceService(dal = dal)
 
-    private val paymentProvider = mockk<PaymentProvider> {
-        coEvery { charge(any()) } returns true
+    private fun createBillingProcessor(paymentProvider: PaymentProvider): BillingProcessor {
+        val billingService = BillingService(paymentProvider, invoiceService)
+        return BillingProcessor(billingService, invoiceService)
     }
 
-    private val billingService = BillingService(paymentProvider, invoiceService)
-
-    private val billingProcessor = BillingProcessor(billingService, invoiceService)
+    private fun createPaymentProviderMock(block: () -> Boolean): PaymentProvider {
+        return mockk {
+            coEvery { charge(any()) } returns block()
+        }
+    }
 
     val kjob = kjob(InMem) {
         extension(KronModule)
@@ -62,8 +64,6 @@ class SchedulerTest {
             runBlocking {
                 setupInitialData(
                     dal = dal,
-                    customersNum = 1000,
-                    invoicesPerCustomerNum = 10,
                     targetDate = now
                 )
             }
@@ -81,7 +81,37 @@ class SchedulerTest {
     }
 
     @Test
-    fun `run scheduled task`() = runBlocking {
+    fun `successful billing`() = runBlocking {
+        val billingProcessor = createBillingProcessor(createPaymentProviderMock { true })
+
+        billingProcessor.process(now)
+
+        assertEquals(
+            0, dal.countFetchInvoicesBy(
+                status = InvoiceStatus.PENDING.toString(),
+                targetDate = now
+            )
+        )
+    }
+
+    @Test
+    fun `billing failure`() = runBlocking {
+        val billingProcessor = createBillingProcessor(createPaymentProviderMock { false })
+
+        billingProcessor.process(now)
+
+        assertEquals(
+            10, dal.countFetchInvoicesBy(
+                status = InvoiceStatus.PENDING.toString(),
+                targetDate = now
+            )
+        )
+    }
+
+    @Test
+    fun `run billing on schedule`() = runBlocking {
+        val billingProcessor = createBillingProcessor(createPaymentProviderMock { true })
+
         val scheduler = Scheduler(kjob)
         scheduler.kron(MinuteBillingJob) { date ->
             withContext(Dispatchers.Default) {

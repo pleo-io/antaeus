@@ -214,5 +214,6 @@ Happy hacking 😁!
 * Fix production crontab since during testing it appeared to have wrong format - **DONE**
 * Fix unstable BillingServiceTest: actually it requires simply proper mokking - **DONE**
 * ??? Customer currency check 
+  * My consideration is that it worth only to add currency check on the BillingService side.
 * ? batch population for seeds
 * ? common test fixtures
