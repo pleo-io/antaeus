@@ -7,10 +7,10 @@ import it.justwrote.kjob.kron.Kron
 import mu.KotlinLogging
 import java.util.*
 
-class Scheduler(private val kronJob: KronJob, val kjob: KJob) {
+class Scheduler(val kjob: KJob) {
     private val logger1 = KotlinLogging.logger {}
 
-    fun schedule(action: suspend (date: Date) -> Unit) {
+    fun kron(kronJob: KronJob, action: suspend (date: Date) -> Unit) {
         kjob(Kron).kron(kronJob) {
             executionType = JobExecutionType.NON_BLOCKING
             maxRetries = 3

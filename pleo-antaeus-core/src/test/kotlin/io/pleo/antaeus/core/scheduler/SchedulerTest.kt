@@ -15,7 +15,6 @@ import it.justwrote.kjob.kron.KronModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -30,12 +29,11 @@ import java.util.*
 object MinuteBillingJob : KronJob("monthly-billing-job", "0 * * ? * * *")
 
 class SchedulerTest {
-    private val logger = KotlinLogging.logger {}
-
     private val tables = arrayOf(InvoiceTable, InvoicePaymentTable, CustomerTable)
 
     private val db by lazy { Database.connect("jdbc:h2:mem:db1;DB_CLOSE_DELAY=-1;", "org.h2.Driver", "root", "") }
     private val dal = AntaeusDal(db = db)
+    private val now = Date()
 
 
     private val invoiceService = InvoiceService(dal = dal)
@@ -65,7 +63,7 @@ class SchedulerTest {
                     dal = dal,
                     customersNum = 1000,
                     invoicesPerCustomerNum = 10,
-                    targetDate = Date()
+                    targetDate = now
                 )
             }
         }
@@ -83,12 +81,12 @@ class SchedulerTest {
 
     @Test
     fun `run scheduled task`() = runBlocking(Dispatchers.Default) {
-        val scheduler = Scheduler(MinuteBillingJob, kjob)
-        scheduler.schedule { date ->
+        val scheduler = Scheduler(kjob)
+        scheduler.kron(MinuteBillingJob) { date ->
             billingProcessor.process(date)
         }
         delay(66_000)
-        assertEquals(0, dal.invoicesByStatusAndTargetDateCount(InvoiceStatus.PENDING.toString(), nextMonthDate()))
+        assertEquals(0, dal.invoicesByStatusAndTargetDateCount(InvoiceStatus.PENDING.toString(), now))
     }
 
 }

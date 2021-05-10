@@ -28,8 +28,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.sql.Connection
 
-// TODO fix up crontab
-object MonthlyBillingJob : KronJob("monthly-billing-job", "0 0 1 * * *")
+//object MonthlyBillingJob : KronJob("monthly-billing-job", "0 0 0 1 * ?")
+object MonthlyBillingJob : KronJob("monthly-billing-job", "0 * * ? * * *")
 
 fun main() {
     // The tables to create in the database.
@@ -77,9 +77,9 @@ fun main() {
         extension(KronModule)
     }.start()
 
-    val kronScheduler = Scheduler(MonthlyBillingJob, kjob)
+    val scheduler = Scheduler(kjob)
 
-    kronScheduler.schedule { date ->
+    scheduler.kron(MonthlyBillingJob) { date ->
         billingProcessor.process(date)
     }
 

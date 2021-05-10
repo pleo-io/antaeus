@@ -22,7 +22,7 @@ suspend fun setupInitialData(
     dal: AntaeusDal,
     customersNum: Int = 100,
     invoicesPerCustomerNum: Int = 10,
-    targetDate: Date = nextMonthDate()
+    targetDate: Date = Date()
 ) {
     // TODO: For seed population batch insert should be used
     val customers = (1..customersNum).mapNotNull {
