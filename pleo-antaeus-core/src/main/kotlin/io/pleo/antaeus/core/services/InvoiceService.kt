@@ -4,6 +4,7 @@
 
 package io.pleo.antaeus.core.services
 
+import io.pleo.antaeus.core.exceptions.InvoiceChargedException
 import io.pleo.antaeus.core.exceptions.InvoiceNotFoundException
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.Invoice
@@ -33,6 +34,9 @@ class InvoiceService(private val dal: AntaeusDal) {
         dal.withTransaction {
             addLogger(StdOutSqlLogger)
             val invoice = fetch(invoiceId)
+            if (invoice.status == InvoiceStatus.PAID) {
+                throw InvoiceChargedException(invoiceId)
+            }
             val invoicePaymentId = dal.createInvoicePayment(invoice.amount, invoice, false, Date())
             logger.info { "inv[$invoiceId] - created payment: $invoicePaymentId" }
             val success = chargeAction(invoice)

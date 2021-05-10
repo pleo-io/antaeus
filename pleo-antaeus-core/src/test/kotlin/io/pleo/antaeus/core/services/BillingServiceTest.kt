@@ -5,6 +5,7 @@ import io.mockk.mockk
 import io.mockk.spyk
 import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
 import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
+import io.pleo.antaeus.core.exceptions.InvoiceChargedException
 import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.data.*
@@ -22,11 +23,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-val invoiceForNotRegisteredCustomer = createInvoice()
-val invoiceWithCurrencyMismatch = createInvoice()
-val invoiceWithNetworkException = createInvoice()
-val invoiceCharged = createInvoice()
-val invoiceNotCharged = createInvoice()
+val invoiceForNotRegisteredCustomer = createInvoice(id = 1, status = InvoiceStatus.PENDING)
+val invoiceWithCurrencyMismatch = createInvoice(id = 11, status = InvoiceStatus.PENDING)
+val invoiceWithNetworkException = createInvoice(id = 21, status = InvoiceStatus.PENDING)
+val invoiceWillBeCharged = createInvoice(id = 31, status = InvoiceStatus.PENDING)
+val invoiceAlreadyCharged = createInvoice(id = 32, status = InvoiceStatus.PAID)
+val invoiceNotCharged = createInvoice(id = 41, status = InvoiceStatus.PENDING)
 
 class BillingServiceTest {
     private val tables = arrayOf(InvoiceTable, InvoicePaymentTable, CustomerTable)
@@ -38,7 +40,7 @@ class BillingServiceTest {
         coEvery { charge(invoiceForNotRegisteredCustomer) } throws CustomerNotFoundException(invoiceForNotRegisteredCustomer.customerId)
         coEvery { charge(invoiceWithCurrencyMismatch) } throws CurrencyMismatchException(invoiceWithCurrencyMismatch.id, invoiceWithCurrencyMismatch.customerId)
         coEvery { charge(invoiceWithNetworkException) } throws NetworkException()
-        coEvery { charge(invoiceCharged) } returns true
+        coEvery { charge(invoiceWillBeCharged) } returns true
         coEvery { charge(invoiceNotCharged) } returns false
     }
 
@@ -46,8 +48,9 @@ class BillingServiceTest {
         coEvery { fetch(invoiceForNotRegisteredCustomer.id) } returns invoiceForNotRegisteredCustomer
         coEvery { fetch(invoiceWithCurrencyMismatch.id) } returns invoiceWithCurrencyMismatch
         coEvery { fetch(invoiceWithNetworkException.id) } returns invoiceWithNetworkException
-        coEvery { fetch(invoiceCharged.id) } returns invoiceCharged
+        coEvery { fetch(invoiceWillBeCharged.id) } returns invoiceWillBeCharged
         coEvery { fetch(invoiceNotCharged.id) } returns invoiceNotCharged
+        coEvery { fetch(invoiceAlreadyCharged.id) } returns invoiceAlreadyCharged
     }
 
     private val billingService = BillingService(paymentProvider, invoiceService)
@@ -97,11 +100,18 @@ class BillingServiceTest {
     }
 
     @Test
-    // FIXME unstable
     internal fun `charged invoice`() = runBlocking {
-        val invoice = billingService.chargeInvoice(invoiceCharged)
-        assertInvoiceCharged(invoiceCharged, paymentsNumber = 1, paymentsSuccess = true)
-        Assertions.assertEquals(InvoiceStatus.PAID, invoice.status)
+        val invoice = billingService.chargeInvoice(invoiceWillBeCharged)
+        assertInvoiceCharged(invoiceWillBeCharged, paymentsNumber = 1, paymentsSuccess = true)
+        val chargedInvoice = dal.fetchInvoice(invoice.id)
+        Assertions.assertEquals(InvoiceStatus.PAID, chargedInvoice?.status)
+    }
+
+    @Test
+    internal fun `fail to charge already charged invoice`() = runBlocking<Unit> {
+        assertThrows<InvoiceChargedException> {
+            billingService.chargeInvoice(invoiceAlreadyCharged)
+        }
     }
 
     private suspend fun assertInvoiceCharged(invoice: Invoice, paymentsNumber: Int, paymentsSuccess: Boolean) {
