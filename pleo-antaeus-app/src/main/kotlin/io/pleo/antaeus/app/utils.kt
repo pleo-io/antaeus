@@ -1,10 +1,8 @@
 package io.pleo.antaeus.app
 
 import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
-import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
 import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.PaymentProvider
-import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Invoice
 import kotlin.random.Random
 
@@ -15,10 +13,7 @@ internal fun getPaymentProvider(): PaymentProvider {
             if (Random.nextInt(100) < 5) {
                 throw NetworkException()
             }
-            if (invoice.customerId == 1) {
-                throw CustomerNotFoundException(invoice.customerId)
-            }
-            if (invoice.amount.currency == Currency.GBP) {
+            if (Random.nextInt(100) < 5) {
                 throw CurrencyMismatchException(invoiceId = invoice.id, customerId = invoice.customerId)
             }
             return Random.nextBoolean()

@@ -1,5 +1,6 @@
 package io.pleo.antaeus.core.services
 
+import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
 import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.models.Invoice
@@ -11,11 +12,19 @@ private val logger = KotlinLogging.logger {}
 
 class BillingService(
     private val paymentProvider: PaymentProvider,
-    private val invoiceService: InvoiceService
+    private val invoiceService: InvoiceService,
+    private val customerService: CustomerService
 ) {
 
     suspend fun chargeInvoice(invoice: Invoice): Invoice {
         logger.info { "inv[${invoice.id}] begin chargeInvoice" }
+        val customer = customerService.fetch(invoice.customerId)
+        if (customer.currency != invoice.amount.currency) {
+            throw CurrencyMismatchException(
+                invoiceId = invoice.id,
+                customerId = invoice.customerId
+            )
+        }
         return invoiceService.chargeInvoice(invoice.id) rt@{ existingInvoice ->
             retry(2, false) {
                 paymentProvider.charge(existingInvoice)

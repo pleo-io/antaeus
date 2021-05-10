@@ -5,6 +5,7 @@ import io.mockk.mockk
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.core.scheduler.Scheduler
 import io.pleo.antaeus.core.services.BillingService
+import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
 import io.pleo.antaeus.data.*
 import io.pleo.antaeus.models.InvoiceStatus
@@ -37,9 +38,10 @@ class BillingProcessorTest {
 
     private val dal = AntaeusDal(db = db)
     private val invoiceService = InvoiceService(dal = dal)
+    private val customerService = CustomerService(dal = dal)
 
     private fun createBillingProcessor(paymentProvider: PaymentProvider): BillingProcessor {
-        val billingService = BillingService(paymentProvider, invoiceService)
+        val billingService = BillingService(paymentProvider, invoiceService, customerService)
         return BillingProcessor(billingService, invoiceService)
     }
 
@@ -101,7 +103,7 @@ class BillingProcessorTest {
         billingProcessor.process(now)
 
         assertEquals(
-            10, dal.countFetchInvoicesBy(
+            100, dal.countFetchInvoicesBy(
                 status = InvoiceStatus.PENDING.toString(),
                 targetDate = now
             )
