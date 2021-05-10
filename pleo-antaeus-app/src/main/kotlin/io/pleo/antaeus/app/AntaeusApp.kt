@@ -18,7 +18,9 @@ import it.justwrote.kjob.InMem
 import it.justwrote.kjob.KronJob
 import it.justwrote.kjob.kjob
 import it.justwrote.kjob.kron.KronModule
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -80,7 +82,9 @@ fun main() {
     val scheduler = Scheduler(kjob)
 
     scheduler.kron(MonthlyBillingJob) { date ->
-        billingProcessor.process(date)
+        withContext(Dispatchers.Default) {
+            billingProcessor.process(date)
+        }
     }
 
     // Create REST web service
@@ -89,3 +93,4 @@ fun main() {
         customerService = customerService
     ).run()
 }
+
