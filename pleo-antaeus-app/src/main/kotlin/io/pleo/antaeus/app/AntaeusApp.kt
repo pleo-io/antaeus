@@ -30,8 +30,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.sql.Connection
 
-//object MonthlyBillingJob : KronJob("monthly-billing-job", "0 0 0 1 * ?")
-object MonthlyBillingJob : KronJob("monthly-billing-job", "0 * * ? * * *")
+object MonthlyBillingJob : KronJob("monthly-billing-job", "0 0 0 1 * ?")
+//object MonthlyBillingJob : KronJob("monthly-billing-job", "0 * * ? * * *")
 
 fun main() {
     // The tables to create in the database.
