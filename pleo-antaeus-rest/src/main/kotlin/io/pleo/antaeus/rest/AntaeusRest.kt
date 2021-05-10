@@ -7,9 +7,11 @@ package io.pleo.antaeus.rest
 import io.javalin.Javalin
 import io.javalin.apibuilder.ApiBuilder.get
 import io.javalin.apibuilder.ApiBuilder.path
+import io.javalin.core.validation.JavalinValidation
 import io.pleo.antaeus.core.exceptions.EntityNotFoundException
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
+import io.pleo.antaeus.models.InvoiceStatus
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
@@ -42,6 +44,7 @@ class AntaeusRest(
             }
 
     init {
+        JavalinValidation.register(InvoiceStatus::class.java) { InvoiceStatus.valueOf(it) }
         // Set up URL endpoints for the rest app
         app.routes {
             get("/") {
@@ -58,9 +61,10 @@ class AntaeusRest(
                 path("v1") {
                     path("invoices") {
                         // URL: /rest/v1/invoices
-                        get {
+                        get { ctx ->
+                            val status = ctx.queryParam<InvoiceStatus>("status").getOrNull();
                             runBlocking {
-                                it.json(invoiceService.fetchAll())
+                                ctx.json(invoiceService.fetchBy(status = status))
                             }
                         }
 

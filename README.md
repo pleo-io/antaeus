@@ -209,11 +209,10 @@ Happy hacking 😁!
   
 ####TODO:
 
-* Update REST endpoint to filter PAID invoices
+* Update REST endpoint to filter PAID invoices - **DONE**
 * Gather info about processed jobs: successfully charged vs failed
-* Fix production crontab since during testing it appeared to have wrong format
+* Fix production crontab since during testing it appeared to have wrong format - **DONE**
 * Fix unstable BillingServiceTest: actually it requires simply proper mokking - **DONE**
-* Customer currency check!!! 
+* ??? Customer currency check 
 * ? batch population for seeds
 * ? common test fixtures
-* add both scheduling options: cron and periodic scheduler (better suited for testing)

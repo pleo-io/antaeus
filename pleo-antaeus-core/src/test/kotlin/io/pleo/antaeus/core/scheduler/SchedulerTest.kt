@@ -15,6 +15,7 @@ import it.justwrote.kjob.kron.KronModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
@@ -80,13 +81,20 @@ class SchedulerTest {
     }
 
     @Test
-    fun `run scheduled task`() = runBlocking(Dispatchers.Default) {
+    fun `run scheduled task`() = runBlocking {
         val scheduler = Scheduler(kjob)
         scheduler.kron(MinuteBillingJob) { date ->
-            billingProcessor.process(date)
+            withContext(Dispatchers.Default) {
+                billingProcessor.process(date)
+            }
         }
         delay(66_000)
-        assertEquals(0, dal.invoicesByStatusAndTargetDateCount(InvoiceStatus.PENDING.toString(), now))
+        assertEquals(
+            0, dal.countFetchInvoicesBy(
+                status = InvoiceStatus.PENDING.toString(),
+                targetDate = now
+            )
+        )
     }
 
 }

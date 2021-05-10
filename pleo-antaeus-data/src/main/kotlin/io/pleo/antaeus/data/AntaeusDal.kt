@@ -44,21 +44,28 @@ class AntaeusDal(private val db: Database) {
     }
 
 
-    suspend fun fetchInvoicesByStatusAndTargetDate(status: String, targetDate: Date): Iterable<Invoice> {
+    suspend fun fetchInvoicesBy(status: String?, targetDate: Date?): Iterable<Invoice> {
         return withTransaction(Dispatchers.IO) {
-            fetchInvoicesByStatusQuery(status, targetDate).map { it.toInvoice() }
+            fetchInvoicesByQuery(status, targetDate).map { it.toInvoice() }
         }
     }
 
-    suspend fun invoicesByStatusAndTargetDateCount(status: String, targetDate: Date): Int {
+    suspend fun countFetchInvoicesBy(status: String, targetDate: Date): Int {
         return withTransaction {
-            fetchInvoicesByStatusQuery(status, targetDate).count()
+            fetchInvoicesByQuery(status, targetDate).count()
         }
     }
 
-    private fun fetchInvoicesByStatusQuery(status: String, targetDate: Date) =
-        InvoiceTable
-            .select { InvoiceTable.status eq status and InvoiceTable.targetDate.lessEq(DateTime(targetDate)) }
+    private fun fetchInvoicesByQuery(status: String?, targetDate: Date?): Query {
+        var query = InvoiceTable.selectAll()
+        status?.let {
+            query = query.andWhere { InvoiceTable.status eq status }
+        }
+        targetDate?.let {
+            query = query.andWhere { InvoiceTable.targetDate.lessEq(DateTime(targetDate)) }
+        }
+        return query;
+    }
 
     suspend fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING, targetDate: Date, createdAt: Date = Date()): Invoice? {
         val id = withTransaction {

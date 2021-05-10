@@ -31,7 +31,7 @@ class BillingProcessor(
     }
 
     fun CoroutineScope.invoiceGenerator(targetDate: Date) = produce {
-        val invoices = invoiceService.fetchByStatusAndTargetDate(InvoiceStatus.PENDING, targetDate)
+        val invoices = invoiceService.fetchBy(status = InvoiceStatus.PENDING, targetDate = targetDate)
         logger.info { "${invoices.count()} invoices to charge ${invoices.map { it.id }}" }
         invoices.forEach { send(it) }
     }

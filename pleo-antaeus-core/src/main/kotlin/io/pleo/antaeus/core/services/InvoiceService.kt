@@ -26,8 +26,11 @@ class InvoiceService(private val dal: AntaeusDal) {
         return dal.fetchInvoice(id) ?: throw InvoiceNotFoundException(id)
     }
 
-    suspend fun fetchByStatusAndTargetDate(status: InvoiceStatus, targetDate: Date): Iterable<Invoice> {
-        return dal.fetchInvoicesByStatusAndTargetDate(status.toString(), targetDate)
+    suspend fun fetchBy(status: InvoiceStatus?, targetDate: Date? = null): Iterable<Invoice> {
+        return dal.fetchInvoicesBy(
+            status = status?.toString(),
+            targetDate = targetDate
+        )
     }
 
     suspend fun chargeInvoice(invoiceId: Int, chargeAction: suspend (invoice: Invoice) -> Boolean): Invoice {
