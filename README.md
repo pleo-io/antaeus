@@ -96,7 +96,7 @@ Happy hacking 😁!
 
 ## Progress
 
-### Tue, May 4th
+## Tue, May 4th
 
 1. Project build - **10 mins**
 
@@ -113,7 +113,7 @@ Happy hacking 😁!
 
 3. Tested existing endpoints via Postman - **10 mins**
 
-### Wed, May 5th
+## Wed, May 5th
 
 4. Exploration
 
@@ -150,7 +150,7 @@ Happy hacking 😁!
 * Billing Processor - performs invoice billing (maybe it worth to perform batch update)
 * Utilize Coroutines + Channel/Actor
 
-### Thu, May 6th - **5 hours**
+## Thu, May 6th - **5 hours**
 
 7. added Kotlin Coroutines support to the project: including tests
 8. Created draft prototype with coroutines: started with fan-out work distribution through channel; plan to use Actor as
@@ -165,11 +165,11 @@ Happy hacking 😁!
 
 10. Implemented draft Billing Service
 
-### Fri, May 7th - **5 hours**
+## Fri, May 7th - **5 hours**
     
-### Sat, May 8th - **3 hours**
+## Sat, May 8th - **3 hours**
 
-####Plan:
+###Plan:
 
 * BillingService:
     * charge invoice taking into account Target Date, invoice status, currency
@@ -181,7 +181,7 @@ Happy hacking 😁!
     * I don't plan to implement full-fledged payment provider, just extend existing mock to emulate basic use cases,
       like: network outage; currency mismatch, customer not found
 
-####Progress:
+###Progress:
 
 * Performance testing:
     * 100_000 invoices - billing 40 sec
@@ -193,21 +193,21 @@ Happy hacking 😁!
 * added additional exceptions handling and logging
 * charge invoices by status == PENDING and with passed targetDate
 
-### Sat, May 9th - **3 hours**
+## Sat, May 9th - **3 hours**
 
-####Plan:
+###Plan:
 
 * Scheduler:
     * encapsulate kjob implementation
     * move Producer and Processor to separate classes
     
-####Progress
+###Progress
 
 * Scheduler:
   * moved kjob into Scheduler impl; refactored integration tests
   * created BillingProcessor
   
-####TODO:
+###TODO:
 
 * Update REST endpoint to filter PAID invoices - **DONE**
 * Gather info about processed jobs: successfully charged vs failed
@@ -217,3 +217,20 @@ Happy hacking 😁!
   * My consideration is that it worth only to add currency check on the BillingService side.
 * ? batch population for seeds
 * ? common test fixtures
+
+## Mon, May 10th - **4 hours**
+
+### Progress
+* Update REST endpoint to filter PAID invoices - **DONE** - added query param to filter out pending invoices
+* Fix production crontab since during testing it appeared to have wrong format - **DONE**
+* Fix unstable BillingServiceTest: actually it requires simply proper mokking - **DONE**
+* Customer currency check - **DONE**
+  * implemented customer currency check in the Billing service. As for me, such kind of error could be thrown by
+    the remote Payment Provider as well, so I've added it to the mock behaviour as well  
+
+### TODO
+* ? batch population for seeds
+* ? common test fixtures
+* Gather info about processed jobs: successfully charged vs failed - it would be a nice feature to track how
+  billing went, but I haven't gotten to it. As an alternative, one can use invoices endpoint to filter out
+  PENDING and PAID invoices
