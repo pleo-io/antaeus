@@ -30,13 +30,13 @@ class BillingProcessor(
         }
     }
 
-    fun CoroutineScope.invoiceGenerator(targetDate: Date) = produce {
+    private fun CoroutineScope.invoiceGenerator(targetDate: Date) = produce {
         val invoices = invoiceService.fetchBy(status = InvoiceStatus.PENDING, targetDate = targetDate)
         logger.info { "${invoices.count()} invoices to charge ${invoices.map { it.id }}" }
         invoices.forEach { send(it) }
     }
 
-    suspend fun billingProcessor(id: Int, channel: ReceiveChannel<Invoice>) = coroutineScope {
+    private suspend fun billingProcessor(id: Int, channel: ReceiveChannel<Invoice>) = coroutineScope {
         launch {
             for (invoice in channel) {
                 try {

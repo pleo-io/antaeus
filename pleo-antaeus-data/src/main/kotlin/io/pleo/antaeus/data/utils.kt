@@ -3,19 +3,9 @@ package io.pleo.antaeus.data
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
-import org.joda.time.DateTimeZone
-import org.joda.time.MutableDateTime
 import java.math.BigDecimal
 import java.util.*
 import kotlin.random.Random
-
-fun nextMonthDate(date: Date = Date()): Date {
-    val mutableDateTime = MutableDateTime(date, DateTimeZone.UTC)
-    mutableDateTime.addMonths(1)
-    mutableDateTime.dayOfMonth = 1
-    mutableDateTime.millisOfDay = 0
-    return mutableDateTime.toDate()
-}
 
 // This will create all schemas and setup initial data
 suspend fun setupInitialData(

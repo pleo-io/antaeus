@@ -25,7 +25,7 @@ class BillingService(
                 customerId = invoice.customerId
             )
         }
-        return invoiceService.chargeInvoice(invoice.id) rt@{ existingInvoice ->
+        return invoiceService.chargeInvoice(invoice.id) { existingInvoice ->
             retry(2, false) {
                 paymentProvider.charge(existingInvoice)
             }

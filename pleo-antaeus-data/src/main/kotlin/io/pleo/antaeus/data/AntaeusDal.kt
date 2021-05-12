@@ -64,7 +64,7 @@ class AntaeusDal(private val db: Database) {
         targetDate?.let {
             query = query.andWhere { InvoiceTable.targetDate.lessEq(DateTime(targetDate)) }
         }
-        return query;
+        return query
     }
 
     suspend fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING, targetDate: Date, createdAt: Date = Date()): Invoice? {

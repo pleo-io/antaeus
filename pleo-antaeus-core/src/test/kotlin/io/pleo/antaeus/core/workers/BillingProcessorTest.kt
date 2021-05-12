@@ -51,7 +51,7 @@ class BillingProcessorTest {
         }
     }
 
-    val kjob = kjob(InMem) {
+    private val kjob = kjob(InMem) {
         extension(KronModule)
     }
 

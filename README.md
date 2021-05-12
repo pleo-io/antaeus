@@ -234,3 +234,4 @@ Happy hacking 😁!
 * Gather info about processed jobs: successfully charged vs failed - it would be a nice feature to track how
   billing went, but I haven't gotten to it. As an alternative, one can use invoices endpoint to filter out
   PENDING and PAID invoices
+* REST API for scheduler

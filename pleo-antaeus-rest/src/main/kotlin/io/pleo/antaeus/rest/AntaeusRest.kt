@@ -16,7 +16,6 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
-private val thisFile: () -> Unit = {}
 
 class AntaeusRest(
         private val invoiceService: InvoiceService,
@@ -62,7 +61,7 @@ class AntaeusRest(
                     path("invoices") {
                         // URL: /rest/v1/invoices
                         get { ctx ->
-                            val status = ctx.queryParam<InvoiceStatus>("status").getOrNull();
+                            val status = ctx.queryParam<InvoiceStatus>("status").getOrNull()
                             runBlocking {
                                 ctx.json(invoiceService.fetchBy(status = status))
                             }
