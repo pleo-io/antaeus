@@ -7,71 +7,156 @@
 
 package io.pleo.antaeus.data
 
+import io.pleo.antaeus.models.*
 import io.pleo.antaeus.models.Currency
-import io.pleo.antaeus.models.Customer
-import io.pleo.antaeus.models.Invoice
-import io.pleo.antaeus.models.InvoiceStatus
-import io.pleo.antaeus.models.Money
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import mu.KotlinLogging
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import org.joda.time.DateTime
+import java.util.Date
 
 class AntaeusDal(private val db: Database) {
-    fun fetchInvoice(id: Int): Invoice? {
+    private val logger = KotlinLogging.logger {}
+
+    suspend fun <T> withTransaction(context: CoroutineDispatcher = Dispatchers.Default, action: suspend Transaction.() -> T): T {
+        return newSuspendedTransaction(context, db, action)
+    }
+
+    suspend fun fetchInvoice(id: Int): Invoice? {
         // transaction(db) runs the internal query as a new database transaction.
-        return transaction(db) {
+        return withTransaction(Dispatchers.IO) {
             // Returns the first invoice with matching id.
             InvoiceTable
-                .select { InvoiceTable.id.eq(id) }
-                .firstOrNull()
-                ?.toInvoice()
+                    .select { InvoiceTable.id.eq(id) }
+                    .firstOrNull()
+                    ?.toInvoice()
         }
     }
 
-    fun fetchInvoices(): List<Invoice> {
-        return transaction(db) {
+    suspend fun fetchInvoices(): List<Invoice> {
+        return withTransaction(Dispatchers.IO) {
             InvoiceTable
-                .selectAll()
-                .map { it.toInvoice() }
+                    .selectAll()
+                    .map { it.toInvoice() }
         }
     }
 
-    fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING): Invoice? {
-        val id = transaction(db) {
+
+    suspend fun fetchInvoicesBy(status: String?, targetDate: Date?): Iterable<Invoice> {
+        return withTransaction(Dispatchers.IO) {
+            fetchInvoicesByQuery(status, targetDate).map { it.toInvoice() }
+        }
+    }
+
+    suspend fun countFetchInvoicesBy(status: String, targetDate: Date): Int {
+        return withTransaction {
+            fetchInvoicesByQuery(status, targetDate).count()
+        }
+    }
+
+    private fun fetchInvoicesByQuery(status: String?, targetDate: Date?): Query {
+        var query = InvoiceTable.selectAll()
+        status?.let {
+            query = query.andWhere { InvoiceTable.status eq status }
+        }
+        targetDate?.let {
+            query = query.andWhere { InvoiceTable.targetDate.lessEq(DateTime(targetDate)) }
+        }
+        return query
+    }
+
+    suspend fun createInvoice(amount: Money, customer: Customer, status: InvoiceStatus = InvoiceStatus.PENDING, targetDate: Date, createdAt: Date = Date()): Invoice? {
+        val id = withTransaction {
             // Insert the invoice and returns its new id.
             InvoiceTable
-                .insert {
-                    it[this.value] = amount.value
-                    it[this.currency] = amount.currency.toString()
-                    it[this.status] = status.toString()
-                    it[this.customerId] = customer.id
-                } get InvoiceTable.id
+                    .insert {
+                        it[this.value] = amount.value
+                        it[this.currency] = amount.currency.toString()
+                        it[this.status] = status.toString()
+                        it[this.createdAt] = DateTime(createdAt)
+                        it[this.targetDate] = DateTime(targetDate)
+                        it[this.customerId] = customer.id
+                    } get InvoiceTable.id
         }
 
         return fetchInvoice(id)
     }
 
-    fun fetchCustomer(id: Int): Customer? {
-        return transaction(db) {
-            CustomerTable
-                .select { CustomerTable.id.eq(id) }
-                .firstOrNull()
-                ?.toCustomer()
+    fun updateInvoiceStatus(id: Int, status: InvoiceStatus): Int {
+        return InvoiceTable
+            .update({ InvoiceTable.id eq id }) {
+                it[this.status] = status.toString()
+            }
+    }
+
+    suspend fun fetchInvoicePayments(invoiceId: Int): List<InvoicePayment> {
+        return withTransaction(Dispatchers.IO) {
+            InvoicePaymentTable
+                    .select { InvoicePaymentTable.invoiceId.eq(invoiceId) }
+                    .map { it.toInvoicePayment() }
         }
     }
 
-    fun fetchCustomers(): List<Customer> {
-        return transaction(db) {
-            CustomerTable
-                .selectAll()
-                .map { it.toCustomer() }
+    suspend fun fetchInvoicePayment(id: Int): InvoicePayment? {
+        return withTransaction(Dispatchers.IO) {
+            InvoicePaymentTable
+                    .select { InvoicePaymentTable.id eq id }
+                    .firstOrNull()
+                    ?.toInvoicePayment()
         }
     }
 
-    fun createCustomer(currency: Currency): Customer? {
-        val id = transaction(db) {
+    suspend fun createInvoicePayment(
+        amount: Money,
+        invoice: Invoice,
+        success: Boolean = false,
+        paymentDate: Date = Date()
+    ): Int {
+        return withTransaction {
+            addLogger(StdOutSqlLogger)
+            logger.info { "inv[${invoice.id}] before create invoice payment for invoice: ${invoice.id}" }
+
+            // Insert the invoice and returns its new id.
+            InvoicePaymentTable
+                .insert {
+                    it[value] = amount.value
+                    it[currency] = amount.currency.toString()
+                    it[this.paymentDate] = DateTime(paymentDate)
+                    it[this.success] = success
+                    it[invoiceId] = invoice.id
+                } get InvoicePaymentTable.id
+        }
+    }
+
+    fun updateInvoicePaymentStatus(id: Int, success: Boolean, paymentDate: Date = Date()): Int {
+        return InvoicePaymentTable
+            .update({ InvoicePaymentTable.id eq id }) {
+                it[this.success] = success
+                it[this.paymentDate] = DateTime(paymentDate)
+            }
+    }
+
+    suspend fun fetchCustomer(id: Int): Customer? {
+        return withTransaction(Dispatchers.IO) {
+            CustomerTable
+                    .select { CustomerTable.id.eq(id) }
+                    .firstOrNull()
+                    ?.toCustomer()
+        }
+    }
+
+    suspend fun fetchCustomers(): List<Customer> {
+        return withTransaction(Dispatchers.IO) {
+            CustomerTable
+                    .selectAll()
+                    .map { it.toCustomer() }
+        }
+    }
+
+    suspend fun createCustomer(currency: Currency): Customer? {
+        val id = withTransaction {
             // Insert the customer and return its new id.
             CustomerTable.insert {
                 it[this.currency] = currency.toString()

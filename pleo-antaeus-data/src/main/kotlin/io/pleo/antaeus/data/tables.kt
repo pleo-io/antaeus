@@ -13,6 +13,17 @@ object InvoiceTable : Table() {
     val value = decimal("value", 1000, 2)
     val customerId = reference("customer_id", CustomerTable.id)
     val status = text("status")
+    val createdAt = datetime("created_at")
+    val targetDate = datetime("target_date")
+}
+
+object InvoicePaymentTable: Table() {
+    val id = integer("id").autoIncrement().primaryKey()
+    val invoiceId = reference("invoice_id", InvoiceTable.id)
+    val currency = varchar("currency", 3)
+    val value = decimal("value", 1000, 2)
+    val paymentDate = datetime("payment_date")
+    val success = bool("success")
 }
 
 object CustomerTable : Table() {

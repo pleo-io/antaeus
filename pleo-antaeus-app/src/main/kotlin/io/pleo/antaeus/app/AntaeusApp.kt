@@ -7,27 +7,35 @@
 
 package io.pleo.antaeus.app
 
-import getPaymentProvider
+import io.pleo.antaeus.core.scheduler.Scheduler
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
-import io.pleo.antaeus.data.AntaeusDal
-import io.pleo.antaeus.data.CustomerTable
-import io.pleo.antaeus.data.InvoiceTable
+import io.pleo.antaeus.core.workers.BillingProcessor
+import io.pleo.antaeus.data.*
 import io.pleo.antaeus.rest.AntaeusRest
+import it.justwrote.kjob.InMem
+import it.justwrote.kjob.KronJob
+import it.justwrote.kjob.kjob
+import it.justwrote.kjob.kron.KronModule
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
-import setupInitialData
 import java.io.File
 import java.sql.Connection
 
+object MonthlyBillingJob : KronJob("monthly-billing-job", "0 0 0 1 * ?")
+//object MonthlyBillingJob : KronJob("monthly-billing-job", "0 * * ? * * *")
+
 fun main() {
     // The tables to create in the database.
-    val tables = arrayOf(InvoiceTable, CustomerTable)
+    val tables = arrayOf(InvoiceTable, InvoicePaymentTable, CustomerTable)
 
     val dbFile: File = File.createTempFile("antaeus-db", ".sqlite")
     // Connect to the database and create the needed tables. Drop any existing data.
@@ -50,8 +58,10 @@ fun main() {
     // Set up data access layer.
     val dal = AntaeusDal(db = db)
 
-    // Insert example data in the database.
-    setupInitialData(dal = dal)
+    runBlocking {
+        // Insert example data in the database.
+        setupInitialData(dal = dal)
+    }
 
     // Get third parties
     val paymentProvider = getPaymentProvider()
@@ -61,7 +71,25 @@ fun main() {
     val customerService = CustomerService(dal = dal)
 
     // This is _your_ billing service to be included where you see fit
-    val billingService = BillingService(paymentProvider = paymentProvider)
+    val billingService = BillingService(
+        paymentProvider = paymentProvider,
+        invoiceService = invoiceService,
+        customerService = customerService,
+    )
+
+    val billingProcessor = BillingProcessor(billingService, invoiceService)
+
+    val kjob = kjob(InMem) {
+        extension(KronModule)
+    }.start()
+
+    val scheduler = Scheduler(kjob)
+
+    scheduler.kron(MonthlyBillingJob) { date ->
+        withContext(Dispatchers.Default) {
+            billingProcessor.process(date)
+        }
+    }
 
     // Create REST web service
     AntaeusRest(
@@ -69,3 +97,4 @@ fun main() {
         customerService = customerService
     ).run()
 }
+
