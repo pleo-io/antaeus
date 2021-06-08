@@ -86,3 +86,15 @@ The code given is structured as follows. Feel free however to modify the structu
 * [Sqlite3](https://sqlite.org/index.html) - Database storage engine
 
 Happy hacking 😁!
+
+### Thoughts
+1. I noticed Transaction level - serializable. It can bring a huge performance hit
+   as it doesn't allow concurrent transactions on the same data subset
+2. AntaeusDal can be an object. The project doesn't use any DI frameworks but   
+   it's always better to use a singleton for such cases
+3. During the implementation of scheduled job - consider retries if something went wrong
+4. Consider this situation in a distributed environment
+5. What if the customer is not in our db already and we still have invoices?
+6. I'm not sure if customer balance reflects the balance in our system. I assume that 
+   it can change over time by different systems. In this case - the only source of truth 
+   is CustomerService.
