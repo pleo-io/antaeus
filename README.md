@@ -90,11 +90,23 @@ Happy hacking 😁!
 ### Thoughts
 1. I noticed Transaction level - serializable. It can bring a huge performance hit
    as it doesn't allow concurrent transactions on the same data subset
-2. AntaeusDal can be an object. The project doesn't use any DI frameworks but   
-   it's always better to use a singleton for such cases
-3. During the implementation of scheduled job - consider retries if something went wrong
-4. Consider this situation in a distributed environment
-5. What if the customer is not in our db already and we still have invoices?
-6. I'm not sure if customer balance reflects the balance in our system. I assume that 
-   it can change over time by different systems. In this case - the only source of truth 
-   is CustomerService.
+2. Consider this situation in a distributed environment
+3. I assume that PaymentProvider will not charge the same invoice twice.
+
+## To improve
+1. Implement failover for scheduled job in case something went wrong.
+2. For Payment provider errors consider better handling e.g. retry for NetworkException.
+CustomerNotFoundException requires further investigation as it can be caused by
+wrong/corrupted data. CurrencyMismatchException requires either usage exchange rate service    
+or changing invoice creation process.
+3. We should consider db pagination in case the amount of invoices will be too high
+4. In general if we would have many invoices - we should have batch processing. 
+5. I would move job scheduler to separate service
+6. I would add createInvoice method to InvoiceService because on theory it's
+possible to create invoice with the different currency than default for customer.
+I'm not sure if application spec contains that.
+7. We also need to notify customer about payment using email or another convenient channel   
+
+## Additional
+1. I've chosen krontab framework because it less verbose than alternatives, 
+   extensible and fits the needs. Also it has good github community and development is pretty active

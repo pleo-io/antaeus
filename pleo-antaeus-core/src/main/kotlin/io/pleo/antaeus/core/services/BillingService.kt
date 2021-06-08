@@ -1,6 +1,13 @@
 package io.pleo.antaeus.core.services
 
+import io.pleo.antaeus.core.exceptions.CurrencyMismatchException
+import io.pleo.antaeus.core.exceptions.CustomerNotFoundException
+import io.pleo.antaeus.core.exceptions.NetworkException
 import io.pleo.antaeus.core.external.PaymentProvider
+import io.pleo.antaeus.models.Invoice
+import mu.KotlinLogging
+
+val logger = KotlinLogging.logger {}
 
 class BillingService(
     private val paymentProvider: PaymentProvider,
@@ -10,9 +17,26 @@ class BillingService(
         val pendingInvoice = invoiceService.fetchPending()
 
         pendingInvoice.forEach {
-            if(paymentProvider.charge(it)) {
+            val isCharged = chargeCustomer(it)
+            if (isCharged) {
                 invoiceService.markAsPaid(it.id)
             }
         }
+    }
+
+    /**
+     * Add error handling
+     */
+    private fun chargeCustomer(it: Invoice): Boolean {
+        try {
+            return paymentProvider.charge(it)
+        } catch (e: CustomerNotFoundException) {
+            logger.debug { e }
+        } catch (e: CurrencyMismatchException) {
+            logger.debug { e }
+        } catch (e: NetworkException) {
+            logger.debug { e }
+        }
+        return false
     }
 }

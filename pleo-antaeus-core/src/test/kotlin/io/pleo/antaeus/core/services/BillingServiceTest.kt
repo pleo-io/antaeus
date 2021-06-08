@@ -3,16 +3,28 @@ package io.pleo.antaeus.core.services
 import io.mockk.*
 import io.pleo.antaeus.core.external.PaymentProvider
 import io.pleo.antaeus.models.Currency.USD
+import io.pleo.antaeus.models.Customer
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus.PENDING
 import io.pleo.antaeus.models.Money
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 
 internal class BillingServiceTest {
     private val paymentProvider = mockk<PaymentProvider>()
     private val invoiceService = mockk<InvoiceService>()
-    private val billingService: BillingService = BillingService(paymentProvider, invoiceService)
+    private val customerService = mockk<CustomerService>()
+    private val billingService: BillingService =
+        BillingService(
+            paymentProvider = paymentProvider,
+            invoiceService = invoiceService
+        )
+
+    @BeforeEach
+    fun setUp() {
+        every { customerService.fetch(any()) }.returns(Customer(1, USD))
+    }
 
     @Test
     fun `should bill invoices when all charged`() {
