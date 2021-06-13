@@ -36,3 +36,12 @@ fun Project.dataLibs() {
         "implementation"("org.xerial:sqlite-jdbc:3.30.1")
     }
 }
+
+/**
+ * Configures libs for core functionality
+ */
+fun Project.coreLibs() {
+    dependencies {
+        "implementation" ("dev.inmo:krontab:0.5.0")
+    }
+}
