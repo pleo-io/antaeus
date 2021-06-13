@@ -100,12 +100,13 @@ CustomerNotFoundException requires further investigation as it can be caused by
 wrong/corrupted data. CurrencyMismatchException requires either usage exchange rate service    
 or changing invoice creation process.
 3. We should consider db pagination in case the amount of invoices will be too high
-4. In general if we would have many invoices - we should have batch processing. 
-5. I would move job scheduler to separate service
-6. I would add createInvoice method to InvoiceService because on theory it's
+4. In general if we would have many invoices - we should batch process them. 
+5. I would move job scheduler to separate service or serverless instance
+6. I would add createInvoice method to InvoiceService because in theory it's
 possible to create invoice with the different currency than default for customer.
 I'm not sure if application spec contains that.
-7. We also need to notify customer about payment using email or another convenient channel   
+7. We also need to notify customer about payment using email or another convenient channel
+8. For new db calls I would add Integration Tests
 
 ## Additional
 1. I've chosen krontab framework because it less verbose than alternatives, 

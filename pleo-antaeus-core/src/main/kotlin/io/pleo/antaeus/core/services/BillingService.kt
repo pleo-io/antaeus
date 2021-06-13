@@ -31,11 +31,11 @@ class BillingService(
         try {
             return paymentProvider.charge(it)
         } catch (e: CustomerNotFoundException) {
-            logger.debug { e }
+            logger.error { e }
         } catch (e: CurrencyMismatchException) {
-            logger.debug { e }
+            logger.error { e }
         } catch (e: NetworkException) {
-            logger.debug { e }
+            logger.error { e }
         }
         return false
     }

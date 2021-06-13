@@ -1,18 +1,21 @@
 package io.pleo.antaeus.core.scheduler
 
+import dev.inmo.krontab.builder.buildSchedule
 import dev.inmo.krontab.doInfinity
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+
+private const val FIRST_DAY_OF_MONTH = 0
 
 object RecurringTaskScheduler {
-    /**
-     * krontab syntax is a bit different from crontab syntax.
-     * That's why it has days of month on the forth place.
-     */
     fun scheduleOnEveryFirstDayOfMonth(block: () -> Unit) {
-        runBlocking {
-            doInfinity(("* * * /1 *")) {
-                block.invoke()
+        val buildSchedule = buildSchedule {
+            dayOfMonth {
+                each(FIRST_DAY_OF_MONTH)
             }
+        }
+        GlobalScope.launch {
+            buildSchedule.doInfinity { block() }
         }
     }
 }

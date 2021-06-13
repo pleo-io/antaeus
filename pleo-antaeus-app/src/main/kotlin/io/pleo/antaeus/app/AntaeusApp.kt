@@ -24,7 +24,7 @@ import setupInitialData
 import java.io.File
 import java.sql.Connection
 
-suspend fun main() {
+fun main() {
     // The tables to create in the database.
     val tables = arrayOf(InvoiceTable, CustomerTable)
 
